@@ -128,8 +128,27 @@ async def get_current_user_and_org(
                 .join(Organization, OrganizationMember.organization_id == Organization.id)
                 .where(OrganizationMember.user_id == dev_user.id)
             )
-            member, org = mem_result.first()
-            return dev_user, org, member.role
+            membership_row = mem_result.first()
+            if membership_row:
+                member, org = membership_row
+                return dev_user, org, member.role
+
+            dev_org = Organization(
+                name="Default Dev Org",
+                slug=f"default-dev-org-{dev_user.id[:6]}",
+                owner_user_id=dev_user.id,
+            )
+            db.add(dev_org)
+            await db.flush()
+
+            member = OrganizationMember(
+                organization_id=dev_org.id,
+                user_id=dev_user.id,
+                role="owner",
+            )
+            db.add(member)
+            await db.commit()
+            return dev_user, dev_org, "owner"
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

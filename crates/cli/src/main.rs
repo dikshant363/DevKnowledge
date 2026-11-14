@@ -234,22 +234,116 @@ async fn main() -> Result<()> {
         },
         Commands::Project { cmd } => match cmd {
             ProjectCommands::Init => {
-                let p = PathBuf::from(".devknowledge");
-                std::fs::create_dir_all(&p)?;
-                let proj_file = p.join("project.json");
-                let initial = serde_json::json!({
-                    "name": "Local Project",
-                    "dependencies": [],
-                    "attached_sources": []
-                });
-                std::fs::write(proj_file, serde_json::to_string_pretty(&initial)?)?;
-                println!("Initialized DevKnowledge project profile in .devknowledge/project.json");
+                let current_dir = std::env::current_dir()?;
+                let existing = runtime_env.load_project_profile(&current_dir)?;
+                if existing.is_some() {
+                    println!(
+                        "DevKnowledge project profile already exists in .devknowledge/project.json"
+                    );
+                } else {
+                    let dir_name = current_dir
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("Local Project");
+                    let profile = shared_types::ProjectProfile {
+                        name: dir_name.to_string(),
+                        dependencies: vec![],
+                        attached_sources: vec![],
+                    };
+                    runtime_env.save_project_profile(&current_dir, &profile)?;
+                    println!(
+                        "Initialized DevKnowledge project profile for '{}' in .devknowledge/project.json",
+                        dir_name
+                    );
+                }
             }
             ProjectCommands::Import { path } => {
-                println!("Scanning dependencies at {:?}", path);
+                let current_dir = std::env::current_dir()?;
+                let target_path = if path.is_absolute() {
+                    path
+                } else {
+                    current_dir.join(&path)
+                };
+
+                println!("Scanning manifests in {:?}", target_path);
+                let scanned = runtime::manifest::scan_and_parse_directory(&target_path)?;
+
+                if scanned.is_empty() {
+                    println!("No dependency manifests (package.json, Cargo.toml, pyproject.toml, requirements.txt) found.");
+                } else {
+                    let mut profile = runtime_env
+                        .load_project_profile(&current_dir)?
+                        .unwrap_or_else(|| shared_types::ProjectProfile {
+                            name: current_dir
+                                .file_name()
+                                .and_then(|n| n.to_str())
+                                .unwrap_or("Local Project")
+                                .to_string(),
+                            dependencies: vec![],
+                            attached_sources: vec![],
+                        });
+
+                    let mut existing_map: std::collections::BTreeMap<(String, String), String> =
+                        profile
+                            .dependencies
+                            .into_iter()
+                            .map(|d| ((d.ecosystem, d.package_name), d.version_constraint))
+                            .collect();
+
+                    let imported_count = scanned.len();
+                    for d in scanned {
+                        println!(
+                            " - [{}] {} ({})",
+                            d.ecosystem, d.package_name, d.version_constraint
+                        );
+                        existing_map.insert((d.ecosystem, d.package_name), d.version_constraint);
+                    }
+
+                    profile.dependencies = existing_map
+                        .into_iter()
+                        .map(|((ecosystem, package_name), version_constraint)| {
+                            shared_types::ProjectDependency {
+                                ecosystem,
+                                package_name,
+                                version_constraint,
+                            }
+                        })
+                        .collect();
+
+                    runtime_env.save_project_profile(&current_dir, &profile)?;
+                    println!(
+                        "✓ Successfully imported {} dependencies into .devknowledge/project.json (total: {})",
+                        imported_count,
+                        profile.dependencies.len()
+                    );
+                }
             }
             ProjectCommands::Attach { sources } => {
-                println!("Attached documentation sources: {:?}", sources);
+                let current_dir = std::env::current_dir()?;
+                let mut profile = runtime_env
+                    .load_project_profile(&current_dir)?
+                    .unwrap_or_else(|| shared_types::ProjectProfile {
+                        name: "Local Project".to_string(),
+                        dependencies: vec![],
+                        attached_sources: vec![],
+                    });
+
+                let mut attached_set: std::collections::BTreeSet<String> =
+                    profile.attached_sources.into_iter().collect();
+
+                let mut added = 0;
+                for s in sources {
+                    if attached_set.insert(s.clone()) {
+                        added += 1;
+                    }
+                }
+
+                profile.attached_sources = attached_set.into_iter().collect();
+                runtime_env.save_project_profile(&current_dir, &profile)?;
+                println!(
+                    "✓ Attached {} new sources to project (total: {:?})",
+                    added, profile.attached_sources
+                );
             }
         },
         Commands::Status => {

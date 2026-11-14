@@ -5,6 +5,33 @@ All notable changes to DevKnowledge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-11-14
+
+### Added
+- **Meta Astryx-Inspired Frontend Redesign (`apps/web`)**:
+  - Semantic Astryx design system tokens in Tailwind and CSS variables supporting accessible dark/light themes.
+  - Command Palette modal (`Cmd+K`) with fuzzy search and quick actions.
+  - Dense, technical Navigation Shell with environment status, active telemetry stream, and breadcrumb tickers.
+  - Redesigned Dashboard Overview with 4-up metric cards and live engine health indicators.
+  - Upgraded Source Registry, Discovery Center, Job Monitor, Artifact Viewer, and Search Explorer.
+  - WCAG 2.1 AA accessibility compliance with visible focus rings (`astryx-focus`) and full keyboard navigation.
+- **TypeScript MCP Server Upgrade (`packages/mcp-server`)**:
+  - Full implementation of all 10 MCP tools (`search_docs`, `get_document`, `get_api_reference`, `get_code_examples`, `check_compatibility`, `get_project_knowledge`, `list_sources`, `get_source_status`, `trigger_source_sync`, `inspect_cache`).
+  - Added MCP prompts (`query_doc`, `audit_dependencies`, `api_lookup`) and resources (`devknowledge://sources/list`, `devknowledge://health`).
+  - Strict MCP protocol error response mapping with `isError: true`.
+- **Rust Runtime & Offline SQLite Cache Hardening**:
+  - SQLite FTS5 query sanitization (`sanitize_fts_query`) preventing syntax errors on special characters and operators.
+  - Enabled SQLite WAL mode, foreign keys, and synchronous NORMAL.
+  - Native manifest parsers in Rust for `Cargo.toml`, `package.json`, `pyproject.toml`, and `requirements.txt`.
+  - Comprehensive unit test coverage across all 5 workspace crates (12/12 passing).
+
+### Security & Reliability Fixes
+- **SEC-02 (P0)**: Hardened runner authentication in `apps/api/app/jobs/router.py` using constant-time `hmac.compare_digest` to prevent timing attacks, and enforced fail-closed validation.
+- **SEC-03 (P1)**: Protected Cloudflare Worker `/api/v1/sync/dispatch` route with mandatory `RUNNER_API_KEY` verification.
+- **DB-01 (P1)**: Hardened SQLAlchemy engine in `apps/api/app/database/session.py` with `pool_pre_ping=True`, `pool_recycle=300`, and connection bounds to prevent Supabase connection exhaustion.
+- **CWL-01 (P1)**: Resolved crawler silent failure on blocked/zero-page targets; failed jobs now properly transition to `failed` with durable queue exponential backoff.
+- **PARSER-01 (P1)**: Refactored Python dependency manifest parsing using standard `tomllib` to correctly handle inline tables with multiple keys (e.g. `features` before `version`).
+
 ## [1.1.0] - 2026-11-14
 
 ### Added

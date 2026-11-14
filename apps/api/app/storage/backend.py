@@ -18,7 +18,9 @@ class StorageBackend(ABC):
     """
 
     @abstractmethod
-    async def put_object(self, key: str, data: bytes | str, content_type: str = "text/plain") -> str:
+    async def put_object(
+        self, key: str, data: bytes | str, content_type: str = "text/plain"
+    ) -> str:
         """Store an object at the given key and return its storage URI or path."""
         pass
 
@@ -52,7 +54,9 @@ class LocalStorageBackend(StorageBackend):
         self.base_dir = Path(base_dir or get_settings().ARTIFACTS_DIR)
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
-    async def put_object(self, key: str, data: bytes | str, content_type: str = "text/plain") -> str:
+    async def put_object(
+        self, key: str, data: bytes | str, content_type: str = "text/plain"
+    ) -> str:
         clean_key = key.lstrip("/")
         target_path = self.base_dir / clean_key
         target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -146,12 +150,16 @@ class R2StorageBackend(StorageBackend):
                 endpoint_url=self.endpoint_url,
                 aws_access_key_id=self.access_key_id,
                 aws_secret_access_key=self.secret_access_key,
-                config=Config(signature_version="s3v4", retries={"max_attempts": 3, "mode": "standard"}),
+                config=Config(
+                    signature_version="s3v4", retries={"max_attempts": 3, "mode": "standard"}
+                ),
                 region_name="auto",
             )
         return self._client
 
-    async def put_object(self, key: str, data: bytes | str, content_type: str = "text/plain") -> str:
+    async def put_object(
+        self, key: str, data: bytes | str, content_type: str = "text/plain"
+    ) -> str:
         clean_key = key.lstrip("/")
         payload = data.encode("utf-8") if isinstance(data, str) else data
 
@@ -238,7 +246,9 @@ class SupabaseStorageBackend(StorageBackend):
             "apikey": self.api_key,
         }
 
-    async def put_object(self, key: str, data: bytes | str, content_type: str = "text/plain") -> str:
+    async def put_object(
+        self, key: str, data: bytes | str, content_type: str = "text/plain"
+    ) -> str:
         clean_key = key.lstrip("/")
         payload = data.encode("utf-8") if isinstance(data, str) else data
         url = f"{self.project_url}/storage/v1/object/{self.bucket_name}/{clean_key}"
@@ -248,7 +258,9 @@ class SupabaseStorageBackend(StorageBackend):
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(url, headers=headers, content=payload)
-            if resp.status_code == 400 and ("already exists" in resp.text.lower() or "duplicate" in resp.text.lower()):
+            if resp.status_code == 400 and (
+                "already exists" in resp.text.lower() or "duplicate" in resp.text.lower()
+            ):
                 resp = await client.put(url, headers=headers, content=payload)
             resp.raise_for_status()
 

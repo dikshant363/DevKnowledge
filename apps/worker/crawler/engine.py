@@ -61,13 +61,16 @@ class CrawlEngine:
         pages_processed = 0
         pages_failed = 0
 
-        # Step 1: Discover sitemap URLs if available
-        sitemap_urls = await self.discovery.discover_sitemap(source.root_url)
-        for s_url in sitemap_urls:
-            if s_url not in visited and len(queue) < max_pages:
-                if self.is_path_allowed(s_url, allowed_paths, excluded_paths):
-                    queue.append((s_url, 1))
-                    visited.add(s_url)
+        # Step 1: Discover sitemap URLs if available (non-fatal if absent or error)
+        try:
+            sitemap_urls = await self.discovery.discover_sitemap(source.root_url)
+            for s_url in sitemap_urls:
+                if s_url not in visited and len(queue) < max_pages:
+                    if self.is_path_allowed(s_url, allowed_paths, excluded_paths):
+                        queue.append((s_url, 1))
+                        visited.add(s_url)
+        except Exception as e:
+            job.error_summary = f"Sitemap discovery warning: {str(e)}"
 
         job.pages_discovered = len(queue)
         await db.commit()
@@ -138,6 +141,17 @@ class CrawlEngine:
                 job.error_summary = f"Error crawling {current_url}: {str(e)}"
                 await db.commit()
                 continue
+
+        # Step 3: Handle zero-page failures with durable error recovery
+        if pages_processed == 0 and pages_failed > 0:
+            job.status = "failed"
+            job.completed_at = datetime.now(timezone.utc)
+            source.status = "error"
+            await db.commit()
+            raise RuntimeError(
+                f"Crawl failed for source '{source.name}': 0 pages processed, {pages_failed} pages failed. "
+                f"Last error: {job.error_summary}"
+            )
 
         job.status = "completed"
         job.completed_at = datetime.now(timezone.utc)
