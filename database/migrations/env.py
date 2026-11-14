@@ -27,7 +27,7 @@ target_metadata = Base.metadata
 settings = get_settings()
 # Resolve sync URL for Alembic
 sync_url = settings.DATABASE_URL_SYNC
-if not sync_url:
+if not sync_url or ("sqlite" in sync_url and "postgresql" in settings.DATABASE_URL):
     sync_url = settings.DATABASE_URL.replace("+asyncpg", "").replace("+aiosqlite", "")
 
 config.set_main_option("sqlalchemy.url", sync_url)

@@ -51,6 +51,6 @@ htmlcov/
 *.db
 *.sqlite
 *.sqlite3
-storage/
+/storage/
 local_data/
 ~/.devknowledge/
