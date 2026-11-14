@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "echo 'No tests yet in mcp-server'"
+    "test": "node tests/test_mcp.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
