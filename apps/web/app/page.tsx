@@ -1,5 +1,6 @@
 import React from "react";
 import { Navbar } from "@/components/Navbar";
+import { DiscoveryCenter } from "@/components/DiscoveryCenter";
 import { Search, Globe, Shield, RefreshCw, Zap, ArrowRight, BookOpen, Layers } from "lucide-react";
 
 export default function HomePage() {
@@ -51,6 +52,11 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* Discovery Center Section */}
+        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <DiscoveryCenter />
         </section>
 
         {/* Feature Grid */}

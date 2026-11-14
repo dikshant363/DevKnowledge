@@ -492,3 +492,185 @@ class AuditLog(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False
     )
+
+
+# ==============================================================================
+# Universal Automatic Documentation Discovery Models
+# ==============================================================================
+
+
+class Technology(Base):
+    """
+    Dynamic Technology Catalog entry with multi-parent hierarchical relationships.
+    """
+
+    __tablename__ = "technologies"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    category: Mapped[str] = mapped_column(
+        String(100), nullable=False
+    )  # programming_language, framework, library, cloud_service, database, etc.
+    ecosystem: Mapped[str] = mapped_column(
+        String(100), default="general", nullable=False
+    )  # jvm, python, rust, javascript, apple, android, etc.
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    website_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
+    repository_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
+    is_official: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+    candidates: Mapped[List["DiscoveryCandidate"]] = relationship(
+        "DiscoveryCandidate", back_populates="technology", cascade="all, delete-orphan"
+    )
+
+
+class TechnologyRelation(Base):
+    """
+    Hierarchical and ecosystem relationships between technologies (e.g. Apple -> Swift -> SwiftUI).
+    """
+
+    __tablename__ = "technology_relations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    source_tech_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("technologies.id", ondelete="CASCADE"), nullable=False
+    )
+    target_tech_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("technologies.id", ondelete="CASCADE"), nullable=False
+    )
+    relation_type: Mapped[str] = mapped_column(
+        String(50), default="framework", nullable=False
+    )  # subsystem, framework, library, tool, language, runtime, dialect
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "source_tech_id", "target_tech_id", "relation_type", name="uq_tech_relation"
+        ),
+        Index("ix_tech_rel_source", "source_tech_id"),
+        Index("ix_tech_rel_target", "target_tech_id"),
+    )
+
+
+class DiscoveryCandidate(Base):
+    """
+    Candidate documentation website discovered across internet sources and evaluated for official status.
+    """
+
+    __tablename__ = "discovery_candidates"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    technology_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("technologies.id", ondelete="SET NULL"), nullable=True
+    )
+    candidate_url: Mapped[str] = mapped_column(String(2048), nullable=False)
+    canonical_domain: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
+    documentation_type: Mapped[str] = mapped_column(
+        String(50), default="api_reference", nullable=False
+    )
+    category: Mapped[str] = mapped_column(String(100), default="general", nullable=False)
+    discovery_provider: Mapped[str] = mapped_column(
+        String(100), nullable=False
+    )  # crates_io, pypi, npm, github_api, search_engine, etc.
+    confidence_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    classification: Mapped[str] = mapped_column(
+        String(50), default="unverified", nullable=False
+    )  # verified_official, likely_official, community_maintained, third_party, unverified, rejected
+    verification_status: Mapped[str] = mapped_column(
+        String(50), default="pending_review", nullable=False
+    )  # pending_review, auto_registered, approved, rejected
+    evidence: Mapped[Dict[str, Any]] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+    license_info: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    discovered_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    registered_source_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("documentation_sources.id", ondelete="SET NULL"), nullable=True
+    )
+
+    technology: Mapped[Optional["Technology"]] = relationship(
+        "Technology", back_populates="candidates"
+    )
+
+    __table_args__ = (
+        Index("ix_discovery_candidate_status", "verification_status"),
+        Index("ix_discovery_candidate_score", "confidence_score"),
+        Index("ix_discovery_candidate_classification", "classification"),
+    )
+
+
+class DiscoveryProviderConfig(Base):
+    """
+    Discovery source provider settings, priority, and daily request quota limits.
+    """
+
+    __tablename__ = "discovery_provider_configs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    provider_name: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    display_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    quota_limit_daily: Mapped[int] = mapped_column(Integer, default=500, nullable=False)
+    requests_today: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_reset_day: Mapped[str] = mapped_column(String(20), default="", nullable=False)
+    priority: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    configuration: Mapped[Dict[str, Any]] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+
+class DiscoveryEvent(Base):
+    """
+    Audit and history trail of discovery activities, provider executions, and source registrations.
+    """
+
+    __tablename__ = "discovery_events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    event_type: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # discovered, verified, auto_registered, queued_for_review, rejected, quota_exceeded
+    provider_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    candidate_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    technology_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    details: Mapped[Dict[str, Any]] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+
+    __table_args__ = (
+        Index("ix_discovery_events_created_at", "created_at"),
+        Index("ix_discovery_events_type", "event_type"),
+    )
+
+
+class DiscoveryGlobalConfig(Base):
+    """
+    Global configuration controlling discovery automation, confidence thresholds, and blacklists.
+    """
+
+    __tablename__ = "discovery_global_configs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    is_discovery_paused: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    auto_registration_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    min_confidence_auto_register: Mapped[float] = mapped_column(Float, default=0.85, nullable=False)
+    excluded_technologies: Mapped[List[str]] = mapped_column(
+        JSON_TYPE, default=list, nullable=False
+    )
+    rejected_domains: Mapped[List[str]] = mapped_column(JSON_TYPE, default=list, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )

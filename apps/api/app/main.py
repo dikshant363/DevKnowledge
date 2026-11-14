@@ -7,6 +7,7 @@ from apps.api.app.auth.router import router as auth_router
 from apps.api.app.compiler.router import router as compiler_router
 from apps.api.app.config import get_settings
 from apps.api.app.database.session import Base, engine
+from apps.api.app.discovery.router import router as discovery_router
 from apps.api.app.health.router import router as health_router
 from apps.api.app.jobs.router import router as jobs_router
 from apps.api.app.knowledge.router import router as knowledge_router
@@ -58,6 +59,7 @@ app.include_router(knowledge_router)
 app.include_router(project_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(quota_router, prefix="/api/v1")
+app.include_router(discovery_router, prefix="/api/v1")
 app.include_router(metrics_router)
 
 
