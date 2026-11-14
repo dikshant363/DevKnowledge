@@ -1,16 +1,22 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
-from apps.api.app.main import app
-from apps.api.app.database.session import Base, engine, AsyncSessionLocal
-from apps.api.app.database.models import DocumentationSource, DocumentationPage, User, Organization, OrganizationMember
+from httpx import ASGITransport, AsyncClient
+
 from apps.api.app.compiler.ckr import CKRDocument
 from apps.api.app.compiler.targets import (
-    MarkdownCompiler,
-    LLMsTxtCompiler,
-    LLMsFullTxtCompiler,
     AgentsMdCompiler,
+    LLMsTxtCompiler,
+    MarkdownCompiler,
     SkillMdCompiler,
 )
+from apps.api.app.database.models import (
+    DocumentationPage,
+    DocumentationSource,
+    Organization,
+    OrganizationMember,
+    User,
+)
+from apps.api.app.database.session import AsyncSessionLocal, Base, engine
+from apps.api.app.main import app
 
 
 def test_ckr_model_and_reproducible_hash():
@@ -20,9 +26,21 @@ def test_ckr_model_and_reproducible_hash():
         canonical_url="https://doc.rust-lang.org/book/ch01.html",
         normalized_path="/book/ch01.html",
         title="Getting Started",
-        sections_data=[{"id": "install", "heading": "Installation", "level": 2, "content": "Install rustup.", "content_hash": "h1"}],
-        code_snippets_data=[{"language": "bash", "code": "curl --proto '=https' ...", "line_count": 1}],
-        api_symbols_data=[{"name": "println!", "signature": "macro println!()", "is_deprecated": False}],
+        sections_data=[
+            {
+                "id": "install",
+                "heading": "Installation",
+                "level": 2,
+                "content": "Install rustup.",
+                "content_hash": "h1",
+            }
+        ],
+        code_snippets_data=[
+            {"language": "bash", "code": "curl --proto '=https' ...", "line_count": 1}
+        ],
+        api_symbols_data=[
+            {"name": "println!", "signature": "macro println!()", "is_deprecated": False}
+        ],
     )
 
     doc2 = CKRDocument.from_page_and_extracted(
@@ -31,9 +49,21 @@ def test_ckr_model_and_reproducible_hash():
         canonical_url="https://doc.rust-lang.org/book/ch01.html",
         normalized_path="/book/ch01.html",
         title="Getting Started",
-        sections_data=[{"id": "install", "heading": "Installation", "level": 2, "content": "Install rustup.", "content_hash": "h1"}],
-        code_snippets_data=[{"language": "bash", "code": "curl --proto '=https' ...", "line_count": 1}],
-        api_symbols_data=[{"name": "println!", "signature": "macro println!()", "is_deprecated": False}],
+        sections_data=[
+            {
+                "id": "install",
+                "heading": "Installation",
+                "level": 2,
+                "content": "Install rustup.",
+                "content_hash": "h1",
+            }
+        ],
+        code_snippets_data=[
+            {"language": "bash", "code": "curl --proto '=https' ...", "line_count": 1}
+        ],
+        api_symbols_data=[
+            {"name": "println!", "signature": "macro println!()", "is_deprecated": False}
+        ],
     )
 
     assert doc1.content_hash == doc2.content_hash
@@ -46,8 +76,18 @@ def test_markdown_and_agent_compilers():
         canonical_url="https://react.dev/reference/react",
         normalized_path="/reference/react",
         title="React APIs",
-        sections_data=[{"id": "hooks", "heading": "Hooks", "level": 2, "content": "Built-in React Hooks.", "content_hash": "h2"}],
-        code_snippets_data=[{"language": "tsx", "code": "const [val, setVal] = useState(0);", "line_count": 1}],
+        sections_data=[
+            {
+                "id": "hooks",
+                "heading": "Hooks",
+                "level": 2,
+                "content": "Built-in React Hooks.",
+                "content_hash": "h2",
+            }
+        ],
+        code_snippets_data=[
+            {"language": "tsx", "code": "const [val, setVal] = useState(0);", "line_count": 1}
+        ],
         api_symbols_data=[
             {"name": "useState", "signature": "useState<T>(initial: T)", "is_deprecated": False},
             {"name": "findDOMNode", "signature": "findDOMNode(instance)", "is_deprecated": True},
@@ -56,7 +96,7 @@ def test_markdown_and_agent_compilers():
 
     md = MarkdownCompiler.compile(doc)
     assert "# React APIs" in md
-    assert "source_url: \"https://react.dev/reference/react\"" in md
+    assert 'source_url: "https://react.dev/reference/react"' in md
     assert "useState<T>" in md
     assert "Deprecation Alert:" in md
     assert "findDOMNode" in md
@@ -78,6 +118,7 @@ def test_markdown_and_agent_compilers():
 @pytest.mark.asyncio
 async def test_compiler_pipeline_workflow():
     import uuid
+
     uid = uuid.uuid4().hex[:8]
 
     async with engine.begin() as conn:
@@ -85,11 +126,17 @@ async def test_compiler_pipeline_workflow():
 
     # 1. Setup user, org, source, and pages
     async with AsyncSessionLocal() as session:
-        user = User(email=f"compiler_{uid}@devknowledge.dev", password_hash="hash", display_name="Compiler Tester")
+        user = User(
+            email=f"compiler_{uid}@devknowledge.dev",
+            password_hash="hash",
+            display_name="Compiler Tester",
+        )
         session.add(user)
         await session.flush()
 
-        org = Organization(name=f"Compiler Org {uid}", slug=f"compiler-org-{uid}", owner_user_id=user.id)
+        org = Organization(
+            name=f"Compiler Org {uid}", slug=f"compiler-org-{uid}", owner_user_id=user.id
+        )
         session.add(org)
         await session.flush()
 
@@ -117,7 +164,6 @@ async def test_compiler_pipeline_workflow():
         )
         session.add(page1)
         await session.commit()
-        source_id = source.id
 
     # 2. Test Compilation API
     transport = ASGITransport(app=app)
@@ -125,7 +171,11 @@ async def test_compiler_pipeline_workflow():
         # Register user for API test
         reg_res = await client.post(
             "/api/v1/auth/register",
-            json={"email": f"api_user_{uid}@devknowledge.dev", "password": "Password123!", "display_name": "User"},
+            json={
+                "email": f"api_user_{uid}@devknowledge.dev",
+                "password": "Password123!",
+                "display_name": "User",
+            },
         )
         token = reg_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
@@ -133,7 +183,10 @@ async def test_compiler_pipeline_workflow():
         # Register source for this user
         create_src = await client.post(
             "/api/v1/sources",
-            json={"root_url": f"https://example.org/compiler-test-{uid}", "name": "Compile Test Source"},
+            json={
+                "root_url": f"https://example.org/compiler-test-{uid}",
+                "name": "Compile Test Source",
+            },
             headers=headers,
         )
         src_id = create_src.json()["id"]

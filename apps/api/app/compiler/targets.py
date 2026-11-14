@@ -1,5 +1,6 @@
 import re
-from typing import List, Dict, Any, Optional
+from typing import List
+
 from apps.api.app.compiler.ckr import CKRDocument
 
 
@@ -10,12 +11,12 @@ class MarkdownCompiler:
     def compile(doc: CKRDocument) -> str:
         lines = [
             "---",
-            f"title: \"{doc.title}\"",
-            f"source_url: \"{doc.canonical_url}\"",
-            f"path: \"{doc.normalized_path}\"",
-            f"version: \"{doc.source_version or 'latest'}\"",
-            f"content_hash: \"{doc.content_hash}\"",
-            f"extracted_at: \"{doc.extracted_at.isoformat()}\"",
+            f'title: "{doc.title}"',
+            f'source_url: "{doc.canonical_url}"',
+            f'path: "{doc.normalized_path}"',
+            f'version: "{doc.source_version or "latest"}"',
+            f'content_hash: "{doc.content_hash}"',
+            f'extracted_at: "{doc.extracted_at.isoformat()}"',
             "---",
             "",
             f"# {doc.title}",
@@ -44,7 +45,9 @@ class MarkdownCompiler:
             lines.append("## Code Examples")
             lines.append("")
             for i, snip in enumerate(doc.code_snippets):
-                desc = f"### Example {i + 1}" + (f": {snip.description}" if snip.description else "")
+                desc = f"### Example {i + 1}" + (
+                    f": {snip.description}" if snip.description else ""
+                )
                 lines.append(desc)
                 lines.append(f"```{snip.language}")
                 lines.append(snip.code)
@@ -81,14 +84,22 @@ class LLMsTxtCompiler:
         ]
 
         for doc in sorted(docs, key=lambda d: d.normalized_path):
-            desc = doc.sections[0].content[:150].replace("\n", " ") if doc.sections else "Documentation page"
+            desc = (
+                doc.sections[0].content[:150].replace("\n", " ")
+                if doc.sections
+                else "Documentation page"
+            )
             lines.append(f"- [{doc.title}]({doc.canonical_url}): {desc}...")
 
         lines.append("")
         lines.append("## Optional Files")
         lines.append("")
-        lines.append(f"- [llms-full.txt]({root_url.rstrip('/')}/llms-full.txt): Complete combined documentation")
-        lines.append(f"- [AGENTS.md]({root_url.rstrip('/')}/AGENTS.md): Coding agent conventions and API rules")
+        lines.append(
+            f"- [llms-full.txt]({root_url.rstrip('/')}/llms-full.txt): Complete combined documentation"
+        )
+        lines.append(
+            f"- [AGENTS.md]({root_url.rstrip('/')}/AGENTS.md): Coding agent conventions and API rules"
+        )
 
         return "\n".join(lines).strip() + "\n"
 
@@ -168,12 +179,12 @@ class SkillMdCompiler:
 
     @staticmethod
     def compile(task_name: str, doc: CKRDocument) -> str:
-        skill_name = re.sub(r'[^a-z0-9]+', '-', task_name.lower()).strip('-')
+        skill_name = re.sub(r"[^a-z0-9]+", "-", task_name.lower()).strip("-")
 
         lines = [
             "---",
             f"name: {skill_name}",
-            f"description: \"How to {task_name} based on official documentation from {doc.canonical_url}\"",
+            f'description: "How to {task_name} based on official documentation from {doc.canonical_url}"',
             "---",
             "",
             f"# {task_name}",

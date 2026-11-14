@@ -1,10 +1,11 @@
-import pytest
 import uuid
-from httpx import AsyncClient, ASGITransport
-from apps.api.app.main import app
-from apps.api.app.database.session import Base, engine
-from apps.api.app.projects.parsers import DependencyManifestParser
 
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from apps.api.app.database.session import Base, engine
+from apps.api.app.main import app
+from apps.api.app.projects.parsers import DependencyManifestParser
 
 SAMPLE_PACKAGE_JSON = """
 {
@@ -59,7 +60,11 @@ async def test_project_intelligence_workflow():
         # Register user
         reg_res = await client.post(
             "/api/v1/auth/register",
-            json={"email": f"proj_{uid}@devknowledge.dev", "password": "Password123!", "display_name": "Project Lead"},
+            json={
+                "email": f"proj_{uid}@devknowledge.dev",
+                "password": "Password123!",
+                "display_name": "Project Lead",
+            },
         )
         token = reg_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}

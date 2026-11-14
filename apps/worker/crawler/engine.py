@@ -1,13 +1,14 @@
-import asyncio
 from datetime import datetime, timezone
-from typing import Set, Dict, List, Optional
+from typing import List, Optional, Set
 from urllib.parse import urlparse
-from sqlalchemy import select, and_
+
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from apps.api.app.database.models import DocumentationSource, DocumentationPage, CrawlJob
-from apps.worker.crawler.safe_client import SafeHTTPClient
+
+from apps.api.app.database.models import CrawlJob, DocumentationPage, DocumentationSource
 from apps.worker.crawler.discovery import DocumentDiscovery
 from apps.worker.crawler.extractor import ContentExtractor, ExtractedDocument
+from apps.worker.crawler.safe_client import SafeHTTPClient
 
 
 class CrawlEngine:
@@ -77,7 +78,9 @@ class CrawlEngine:
 
             try:
                 resp = await self.client.get(current_url)
-                if resp.status_code != 200 or "text/html" not in resp.headers.get("content-type", "text/html"):
+                if resp.status_code != 200 or "text/html" not in resp.headers.get(
+                    "content-type", "text/html"
+                ):
                     continue
 
                 html = resp.text

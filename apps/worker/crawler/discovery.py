@@ -1,8 +1,10 @@
 import re
 import xml.etree.ElementTree as ET
-from urllib.parse import urljoin, urlparse, urldefrag
-from typing import List, Set, Optional
+from typing import List, Optional, Set
+from urllib.parse import urldefrag, urljoin, urlparse
+
 from bs4 import BeautifulSoup
+
 from apps.worker.crawler.safe_client import SafeHTTPClient
 
 
@@ -33,7 +35,8 @@ class DocumentDiscovery:
         if parsed.query:
             # Filter out tracking query params
             filtered_query = "&".join(
-                param for param in parsed.query.split("&")
+                param
+                for param in parsed.query.split("&")
                 if not param.startswith(("utm_", "ref=", "fbclid="))
             )
             if filtered_query:
@@ -53,7 +56,11 @@ class DocumentDiscovery:
         for sitemap_url in sitemap_candidates:
             try:
                 resp = await self.client.get(sitemap_url)
-                if resp.status_code == 200 and ("xml" in resp.headers.get("content-type", "") or "<urlset" in resp.text or "<sitemapindex" in resp.text):
+                if resp.status_code == 200 and (
+                    "xml" in resp.headers.get("content-type", "")
+                    or "<urlset" in resp.text
+                    or "<sitemapindex" in resp.text
+                ):
                     urls = self.parse_sitemap_xml(resp.text)
                     if urls:
                         discovered_urls.extend(urls)
@@ -67,7 +74,7 @@ class DocumentDiscovery:
         urls = []
         try:
             # Strip namespaces for simple parsing
-            xml_clean = re.sub(r'\sxmlns="[^"]+"', '', xml_content, count=1)
+            xml_clean = re.sub(r'\sxmlns="[^"]+"', "", xml_content, count=1)
             root = ET.fromstring(xml_clean)
 
             # Direct urlset
@@ -76,7 +83,7 @@ class DocumentDiscovery:
                     urls.append(url_elem.text.strip())
 
             # Sitemap index references
-            for sitemap_elem in root.findall(".//sitemap/loc"):
+            for _sitemap_elem in root.findall(".//sitemap/loc"):
                 # Nested sitemaps could be crawled recursively if needed
                 pass
         except Exception:
@@ -106,7 +113,10 @@ class DocumentDiscovery:
             if norm:
                 parsed = urlparse(norm)
                 # Ensure link belongs to same domain
-                if parsed.hostname and (parsed.hostname == canonical_domain or parsed.hostname.endswith(f".{canonical_domain}")):
+                if parsed.hostname and (
+                    parsed.hostname == canonical_domain
+                    or parsed.hostname.endswith(f".{canonical_domain}")
+                ):
                     links.add(norm)
 
         return links

@@ -1,12 +1,14 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, Query, status
+
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from apps.api.app.auth.security import get_current_user_and_org
 from apps.api.app.database.session import get_db
 from apps.api.app.knowledge.schemas import (
+    DocumentDetailResponse,
     SearchQuery,
     SearchResponse,
-    DocumentDetailResponse,
 )
 from apps.api.app.knowledge.service import SearchService
 

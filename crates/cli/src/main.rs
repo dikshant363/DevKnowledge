@@ -64,17 +64,13 @@ enum SourceCommands {
     /// List registered sources
     List,
     /// Synchronize local documentation cache with upstream
-    Sync {
-        source_name_or_id: Option<String>,
-    },
+    Sync { source_name_or_id: Option<String> },
 }
 
 #[derive(Subcommand, Debug)]
 enum DocsCommands {
     /// Retrieve document by ID
-    Get {
-        document_id: String,
-    },
+    Get { document_id: String },
 }
 
 #[derive(Subcommand, Debug)]
@@ -87,9 +83,7 @@ enum ProjectCommands {
         path: PathBuf,
     },
     /// Attach documentation sources to the current project
-    Attach {
-        sources: Vec<String>,
-    },
+    Attach { sources: Vec<String> },
 }
 
 #[tokio::main]
@@ -110,12 +104,22 @@ async fn main() -> Result<()> {
             println!("DevKnowledge CLI authenticated with {}", server);
         }
         Commands::Source { cmd } => match cmd {
-            SourceCommands::Add { url, name, category } => {
-                match client.register_source(&url, name.as_deref(), Some(&category)).await {
+            SourceCommands::Add {
+                url,
+                name,
+                category,
+            } => {
+                match client
+                    .register_source(&url, name.as_deref(), Some(&category))
+                    .await
+                {
                     Ok(source) => {
                         let cache = runtime_env.open_cache()?;
                         cache.save_source(&source)?;
-                        println!("Successfully registered source: {} ({}) [ID: {}]", source.name, source.root_url, source.id);
+                        println!(
+                            "Successfully registered source: {} ({}) [ID: {}]",
+                            source.name, source.root_url, source.id
+                        );
                     }
                     Err(e) => {
                         eprintln!("Failed to register source with cloud API ({}). Attempting local queueing...", e);
@@ -141,7 +145,10 @@ async fn main() -> Result<()> {
                 } else {
                     println!("Registered Sources ({}):", sources.len());
                     for s in sources {
-                        println!(" - [{}] {} ({}) [ID: {}]", s.category, s.name, s.root_url, s.id);
+                        println!(
+                            " - [{}] {} ({}) [ID: {}]",
+                            s.category, s.name, s.root_url, s.id
+                        );
                     }
                 }
             }
@@ -164,7 +171,10 @@ async fn main() -> Result<()> {
 
                     match sync_eng.sync_source(&s).await {
                         Ok(summary) => {
-                            println!("✓ Synced {}: {} new/updated, {} skipped (up to date)", s.name, summary.documents_downloaded, summary.documents_skipped);
+                            println!(
+                                "✓ Synced {}: {} new/updated, {} skipped (up to date)",
+                                s.name, summary.documents_downloaded, summary.documents_skipped
+                            );
                         }
                         Err(e) => {
                             eprintln!("! Could not sync {}: {}", s.name, e);
@@ -212,7 +222,10 @@ async fn main() -> Result<()> {
                             println!("## {}\n{}\n", sec.heading, sec.content);
                         }
                     } else {
-                        println!("Document {} not found in local cache or upstream server.", id);
+                        println!(
+                            "Document {} not found in local cache or upstream server.",
+                            id
+                        );
                     }
                 } else {
                     println!("Invalid UUID: {}", document_id);
@@ -247,15 +260,31 @@ async fn main() -> Result<()> {
             println!("SQLite Database: {:?}", runtime_env.database_path);
             println!("Cached Sources: {}", sources.len());
             println!("Server URL: {}", config.server_url);
-            println!("Authenticated: {}", if config.api_token.is_some() { "Yes" } else { "No" });
+            println!(
+                "Authenticated: {}",
+                if config.api_token.is_some() {
+                    "Yes"
+                } else {
+                    "No"
+                }
+            );
         }
         Commands::Doctor => {
             println!("=== DevKnowledge Doctor ===");
-            println!("[✓] Runtime storage directory accessible: {:?}", runtime_env.base_dir);
-            println!("[✓] SQLite database initialized: {:?}", runtime_env.database_path);
+            println!(
+                "[✓] Runtime storage directory accessible: {:?}",
+                runtime_env.base_dir
+            );
+            println!(
+                "[✓] SQLite database initialized: {:?}",
+                runtime_env.database_path
+            );
             let cache = runtime_env.open_cache()?;
             let sources = cache.list_sources().unwrap_or_default();
-            println!("[✓] Local cache operational ({} sources cached)", sources.len());
+            println!(
+                "[✓] Local cache operational ({} sources cached)",
+                sources.len()
+            );
             println!("[✓] System status: Healthy");
         }
         Commands::Logout => {

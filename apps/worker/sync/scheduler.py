@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from typing import List
-from sqlalchemy import select, and_
+
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from apps.api.app.database.models import DocumentationSource, CrawlJob
+
+from apps.api.app.database.models import CrawlJob, DocumentationSource
 
 
 class SyncScheduler:
@@ -13,9 +15,7 @@ class SyncScheduler:
     @staticmethod
     async def get_sources_due_for_sync(db: AsyncSession) -> List[DocumentationSource]:
         result = await db.execute(
-            select(DocumentationSource).where(
-                DocumentationSource.status.in_(["active", "idle"])
-            )
+            select(DocumentationSource).where(DocumentationSource.status.in_(["active", "idle"]))
         )
         sources = list(result.scalars().all())
         now = datetime.now(timezone.utc)

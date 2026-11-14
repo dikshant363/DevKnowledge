@@ -1,26 +1,25 @@
-import os
 import hashlib
 import json
-from pathlib import Path
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional
-from sqlalchemy import select, and_, func
+from pathlib import Path
+from typing import List
+
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from apps.api.app.config import get_settings
-from apps.api.app.database.models import (
-    DocumentationSource,
-    DocumentationPage,
-    SourceSnapshot,
-    PageVersion,
-    GeneratedArtifact,
-)
+
 from apps.api.app.compiler.ckr import CKRDocument
 from apps.api.app.compiler.targets import (
-    MarkdownCompiler,
-    LLMsTxtCompiler,
-    LLMsFullTxtCompiler,
     AgentsMdCompiler,
+    LLMsFullTxtCompiler,
+    LLMsTxtCompiler,
     SkillMdCompiler,
+)
+from apps.api.app.config import get_settings
+from apps.api.app.database.models import (
+    DocumentationPage,
+    DocumentationSource,
+    GeneratedArtifact,
+    SourceSnapshot,
 )
 
 settings = get_settings()
@@ -39,12 +38,14 @@ class CompilerPipeline:
     ) -> SourceSnapshot:
         # 1. Fetch all indexed pages for this source
         result = await db.execute(
-            select(DocumentationPage).where(
+            select(DocumentationPage)
+            .where(
                 and_(
                     DocumentationPage.source_id == source.id,
                     DocumentationPage.page_status == "indexed",
                 )
-            ).order_by(DocumentationPage.normalized_path.asc())
+            )
+            .order_by(DocumentationPage.normalized_path.asc())
         )
         pages = list(result.scalars().all())
 
@@ -71,7 +72,15 @@ class CompilerPipeline:
                 canonical_url=p.canonical_url,
                 normalized_path=p.normalized_path,
                 title=p.title,
-                sections_data=[{"id": "main", "heading": p.title, "level": 1, "content": f"Documentation content for {p.title}", "content_hash": p.current_content_hash}],
+                sections_data=[
+                    {
+                        "id": "main",
+                        "heading": p.title,
+                        "level": 1,
+                        "content": f"Documentation content for {p.title}",
+                        "content_hash": p.current_content_hash,
+                    }
+                ],
                 code_snippets_data=[],
                 api_symbols_data=[],
                 source_version=source.source_version,
@@ -112,53 +121,61 @@ class CompilerPipeline:
         llms_txt = LLMsTxtCompiler.compile(source.name, source.root_url, ckr_docs)
         llms_txt_path = artifact_base_dir / "llms.txt"
         llms_txt_path.write_text(llms_txt, encoding="utf-8")
-        db.add(GeneratedArtifact(
-            source_id=source.id,
-            snapshot_id=snapshot.id,
-            artifact_type="llms_txt",
-            artifact_version="1.0.0",
-            storage_location=str(llms_txt_path),
-            checksum=hashlib.sha256(llms_txt.encode("utf-8")).hexdigest(),
-        ))
+        db.add(
+            GeneratedArtifact(
+                source_id=source.id,
+                snapshot_id=snapshot.id,
+                artifact_type="llms_txt",
+                artifact_version="1.0.0",
+                storage_location=str(llms_txt_path),
+                checksum=hashlib.sha256(llms_txt.encode("utf-8")).hexdigest(),
+            )
+        )
 
         # B. llms-full.txt
         llms_full_txt = LLMsFullTxtCompiler.compile(source.name, ckr_docs)
         llms_full_path = artifact_base_dir / "llms-full.txt"
         llms_full_path.write_text(llms_full_txt, encoding="utf-8")
-        db.add(GeneratedArtifact(
-            source_id=source.id,
-            snapshot_id=snapshot.id,
-            artifact_type="llms_full_txt",
-            artifact_version="1.0.0",
-            storage_location=str(llms_full_path),
-            checksum=hashlib.sha256(llms_full_txt.encode("utf-8")).hexdigest(),
-        ))
+        db.add(
+            GeneratedArtifact(
+                source_id=source.id,
+                snapshot_id=snapshot.id,
+                artifact_type="llms_full_txt",
+                artifact_version="1.0.0",
+                storage_location=str(llms_full_path),
+                checksum=hashlib.sha256(llms_full_txt.encode("utf-8")).hexdigest(),
+            )
+        )
 
         # C. AGENTS.md
         agents_md = AgentsMdCompiler.compile(source.name, ckr_docs)
         agents_md_path = artifact_base_dir / "AGENTS.md"
         agents_md_path.write_text(agents_md, encoding="utf-8")
-        db.add(GeneratedArtifact(
-            source_id=source.id,
-            snapshot_id=snapshot.id,
-            artifact_type="agents_md",
-            artifact_version="1.0.0",
-            storage_location=str(agents_md_path),
-            checksum=hashlib.sha256(agents_md.encode("utf-8")).hexdigest(),
-        ))
+        db.add(
+            GeneratedArtifact(
+                source_id=source.id,
+                snapshot_id=snapshot.id,
+                artifact_type="agents_md",
+                artifact_version="1.0.0",
+                storage_location=str(agents_md_path),
+                checksum=hashlib.sha256(agents_md.encode("utf-8")).hexdigest(),
+            )
+        )
 
         # D. SKILL.md
         skill_md = SkillMdCompiler.compile(f"Use {source.name}", ckr_docs[0])
         skill_md_path = artifact_base_dir / "SKILL.md"
         skill_md_path.write_text(skill_md, encoding="utf-8")
-        db.add(GeneratedArtifact(
-            source_id=source.id,
-            snapshot_id=snapshot.id,
-            artifact_type="skill_md",
-            artifact_version="1.0.0",
-            storage_location=str(skill_md_path),
-            checksum=hashlib.sha256(skill_md.encode("utf-8")).hexdigest(),
-        ))
+        db.add(
+            GeneratedArtifact(
+                source_id=source.id,
+                snapshot_id=snapshot.id,
+                artifact_type="skill_md",
+                artifact_version="1.0.0",
+                storage_location=str(skill_md_path),
+                checksum=hashlib.sha256(skill_md.encode("utf-8")).hexdigest(),
+            )
+        )
 
         # E. Manifest location
         manifest_data = {

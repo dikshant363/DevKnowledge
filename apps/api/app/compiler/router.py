@@ -1,16 +1,18 @@
 import json
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, status, Response
-from sqlalchemy import select, and_
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from apps.api.app.auth.security import get_current_user_and_org
-from apps.api.app.database.session import get_db
+from apps.api.app.compiler.pipeline import CompilerPipeline
 from apps.api.app.database.models import (
     DocumentationSource,
-    SourceSnapshot,
     GeneratedArtifact,
+    SourceSnapshot,
 )
-from apps.api.app.compiler.pipeline import CompilerPipeline
+from apps.api.app.database.session import get_db
 
 router = APIRouter(prefix="/sources", tags=["Knowledge Compiler"])
 
@@ -70,7 +72,11 @@ async def get_source_manifest(
         select(SourceSnapshot).where(SourceSnapshot.id == source.active_snapshot_id)
     )
     snapshot = snap_res.scalar_one_or_none()
-    if not snapshot or not snapshot.manifest_location or not Path(snapshot.manifest_location).exists():
+    if (
+        not snapshot
+        or not snapshot.manifest_location
+        or not Path(snapshot.manifest_location).exists()
+    ):
         raise HTTPException(status_code=404, detail="Manifest file not found on disk")
 
     manifest_json = Path(snapshot.manifest_location).read_text(encoding="utf-8")
@@ -100,9 +106,7 @@ async def list_artifacts(
         return []
 
     art_res = await db.execute(
-        select(GeneratedArtifact).where(
-            GeneratedArtifact.snapshot_id == source.active_snapshot_id
-        )
+        select(GeneratedArtifact).where(GeneratedArtifact.snapshot_id == source.active_snapshot_id)
     )
     artifacts = art_res.scalars().all()
     return [

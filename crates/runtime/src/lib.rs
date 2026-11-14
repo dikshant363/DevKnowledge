@@ -21,12 +21,13 @@ pub struct RuntimeEnvironment {
 
 impl RuntimeEnvironment {
     pub fn default_paths() -> Result<Self> {
-        let base_dir = if let Some(proj_dirs) = ProjectDirs::from("com", "devknowledge", "DevKnowledge") {
-            proj_dirs.data_dir().to_path_buf()
-        } else {
-            let home = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE"))?;
-            PathBuf::from(home).join(".devknowledge")
-        };
+        let base_dir =
+            if let Some(proj_dirs) = ProjectDirs::from("com", "devknowledge", "DevKnowledge") {
+                proj_dirs.data_dir().to_path_buf()
+            } else {
+                let home = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE"))?;
+                PathBuf::from(home).join(".devknowledge")
+            };
 
         let config_dir = base_dir.join("config");
         let database_dir = base_dir.join("database");

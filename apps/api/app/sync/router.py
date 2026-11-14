@@ -1,17 +1,19 @@
 import json
 from pathlib import Path
-from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import select, and_, desc
+from sqlalchemy import and_, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from apps.api.app.auth.security import get_current_user_and_org
-from apps.api.app.database.session import get_db
 from apps.api.app.database.models import (
     DocumentationSource,
     SourceSnapshot,
     SyncEvent,
 )
+from apps.api.app.database.session import get_db
 
 router = APIRouter(tags=["Version Intelligence & Snapshots"])
 
@@ -59,7 +61,9 @@ async def get_snapshot(
 @router.get("/api/v1/snapshots/{snapshot_id}/diff")
 async def get_snapshot_diff(
     snapshot_id: str,
-    compare_to_snapshot_id: Optional[str] = Query(None, description="Previous snapshot to compare against"),
+    compare_to_snapshot_id: Optional[str] = Query(
+        None, description="Previous snapshot to compare against"
+    ),
     user_org=Depends(get_current_user_and_org),
     db: AsyncSession = Depends(get_db),
 ):
@@ -111,21 +115,24 @@ async def get_snapshot_diff(
 
     target_docs = {
         d["canonical_url"]: d["content_hash"]
-        for d in json.loads(Path(target_snap.manifest_location).read_text(encoding="utf-8")).get("documents", [])
+        for d in json.loads(Path(target_snap.manifest_location).read_text(encoding="utf-8")).get(
+            "documents", []
+        )
     }
 
     base_docs = {}
     if base_snap and base_snap.manifest_location and Path(base_snap.manifest_location).exists():
         base_docs = {
             d["canonical_url"]: d["content_hash"]
-            for d in json.loads(Path(base_snap.manifest_location).read_text(encoding="utf-8")).get("documents", [])
+            for d in json.loads(Path(base_snap.manifest_location).read_text(encoding="utf-8")).get(
+                "documents", []
+            )
         }
 
     added_urls = [url for url in target_docs if url not in base_docs]
     removed_urls = [url for url in base_docs if url not in target_docs]
     modified_urls = [
-        url for url in target_docs
-        if url in base_docs and target_docs[url] != base_docs[url]
+        url for url in target_docs if url in base_docs and target_docs[url] != base_docs[url]
     ]
 
     return {

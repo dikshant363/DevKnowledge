@@ -1,14 +1,17 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
+
 from apps.api.app.auth.router import router as auth_router
-from apps.api.app.config import get_settings
-from apps.api.app.database.session import engine, Base
-from apps.api.app.registry.router import router as registry_router
 from apps.api.app.compiler.router import router as compiler_router
-from apps.api.app.sync.router import router as sync_router
+from apps.api.app.config import get_settings
+from apps.api.app.database.session import Base, engine
 from apps.api.app.knowledge.router import router as knowledge_router
+from apps.api.app.observability.metrics import router as metrics_router
 from apps.api.app.projects.router import router as project_router
+from apps.api.app.registry.router import router as registry_router
+from apps.api.app.sync.router import router as sync_router
 
 settings = get_settings()
 
@@ -49,6 +52,7 @@ app.include_router(compiler_router, prefix="/api/v1")
 app.include_router(sync_router)
 app.include_router(knowledge_router)
 app.include_router(project_router, prefix="/api/v1")
+app.include_router(metrics_router)
 
 
 @app.get("/api/v1/health", status_code=status.HTTP_200_OK, tags=["Health"])

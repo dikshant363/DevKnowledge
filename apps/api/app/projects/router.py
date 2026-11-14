@@ -1,14 +1,16 @@
 from typing import List
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from apps.api.app.auth.security import get_current_user_and_org
 from apps.api.app.database.session import get_db
 from apps.api.app.projects.schemas import (
-    ProjectCreate,
-    ProjectResponse,
     DependencyImportRequest,
-    ProjectKnowledgeResponse,
     DependencyItem,
+    ProjectCreate,
+    ProjectKnowledgeResponse,
+    ProjectResponse,
 )
 from apps.api.app.projects.service import ProjectService
 
@@ -47,7 +49,11 @@ async def get_project(
     return project
 
 
-@router.post("/{project_id}/dependencies/import", response_model=List[DependencyItem], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{project_id}/dependencies/import",
+    response_model=List[DependencyItem],
+    status_code=status.HTTP_201_CREATED,
+)
 async def import_dependencies(
     project_id: str,
     req: DependencyImportRequest,

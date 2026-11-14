@@ -1,19 +1,20 @@
-from typing import List, Tuple, Optional, Dict, Any
-from sqlalchemy import select, and_
+from typing import Dict, List
+
+from fastapi import HTTPException
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
+
 from apps.api.app.database.models import (
-    ProjectProfile,
-    ProjectDependency,
     DocumentationSource,
+    ProjectDependency,
+    ProjectProfile,
 )
 from apps.api.app.projects.parsers import DependencyManifestParser
 from apps.api.app.projects.schemas import (
-    ProjectCreate,
-    ProjectUpdate,
     DependencyImportRequest,
-    ProjectKnowledgeResponse,
     DependencyItem,
+    ProjectCreate,
+    ProjectKnowledgeResponse,
     VersionWarning,
 )
 
@@ -94,7 +95,10 @@ class ProjectService:
             # Attempt to match package name with documentation source name or domain
             matching_source = None
             for s in available_sources:
-                if d.package_name.lower() in s.name.lower() or d.package_name.lower() in s.canonical_domain.lower():
+                if (
+                    d.package_name.lower() in s.name.lower()
+                    or d.package_name.lower() in s.canonical_domain.lower()
+                ):
                     matching_source = s
                     break
 
@@ -140,7 +144,10 @@ class ProjectService:
         attached_sources_data = []
 
         for d in deps:
-            if not d.documentation_source_id or d.documentation_source_id not in attached_sources_map:
+            if (
+                not d.documentation_source_id
+                or d.documentation_source_id not in attached_sources_map
+            ):
                 warnings.append(
                     VersionWarning(
                         package_name=d.package_name,
@@ -151,17 +158,21 @@ class ProjectService:
                 )
             else:
                 source = attached_sources_map[d.documentation_source_id]
-                attached_sources_data.append({
-                    "id": source.id,
-                    "name": source.name,
-                    "root_url": source.root_url,
-                    "version": source.source_version,
-                    "active_snapshot_id": source.active_snapshot_id,
-                })
+                attached_sources_data.append(
+                    {
+                        "id": source.id,
+                        "name": source.name,
+                        "root_url": source.root_url,
+                        "version": source.source_version,
+                        "active_snapshot_id": source.active_snapshot_id,
+                    }
+                )
 
                 # Check version compatibility
                 if source.source_version and d.version_constraint != "*":
-                    if not source.source_version.startswith(d.version_constraint.replace("^", "").replace("~", "").split(".")[0]):
+                    if not source.source_version.startswith(
+                        d.version_constraint.replace("^", "").replace("~", "").split(".")[0]
+                    ):
                         warnings.append(
                             VersionWarning(
                                 package_name=d.package_name,

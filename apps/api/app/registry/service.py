@@ -1,12 +1,14 @@
+from typing import List, Optional, Tuple
 from urllib.parse import urlparse
-from typing import Optional, List, Tuple
-from sqlalchemy import select, func, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from fastapi import HTTPException, status
-from apps.api.app.database.models import DocumentationSource, CrawlJob, DocumentationPage
-from apps.api.app.registry.schemas import SourceCreate, SourceUpdate
-from apps.api.app.security.ssrf import SSRFValidator, SSRFSecurityException
+from sqlalchemy import and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from apps.api.app.config import get_settings
+from apps.api.app.database.models import CrawlJob, DocumentationSource
+from apps.api.app.registry.schemas import SourceCreate, SourceUpdate
+from apps.api.app.security.ssrf import SSRFSecurityException, SSRFValidator
 
 settings = get_settings()
 
@@ -20,13 +22,25 @@ def suggest_display_name_and_category(url: str) -> Tuple[str, str]:
     category = "general"
     if any(k in domain or k in path for k in ["android", "ios", "swift", "kotlin", "flutter"]):
         category = "mobile-development"
-    elif any(k in domain or k in path for k in ["rust", "cargo", "cpp", "zig", "linux", "kernel", "golang"]):
+    elif any(
+        k in domain or k in path
+        for k in ["rust", "cargo", "cpp", "zig", "linux", "kernel", "golang"]
+    ):
         category = "systems-programming"
-    elif any(k in domain or k in path for k in ["react", "vue", "nextjs", "angular", "tailwind", "typescript", "javascript"]):
+    elif any(
+        k in domain or k in path
+        for k in ["react", "vue", "nextjs", "angular", "tailwind", "typescript", "javascript"]
+    ):
         category = "frontend-development"
-    elif any(k in domain or k in path for k in ["python", "django", "fastapi", "flask", "node", "express"]):
+    elif any(
+        k in domain or k in path
+        for k in ["python", "django", "fastapi", "flask", "node", "express"]
+    ):
         category = "backend-development"
-    elif any(k in domain or k in path for k in ["pytorch", "tensorflow", "huggingface", "llm", "openai", "anthropic"]):
+    elif any(
+        k in domain or k in path
+        for k in ["pytorch", "tensorflow", "huggingface", "llm", "openai", "anthropic"]
+    ):
         category = "ai-ml"
     elif any(k in domain or k in path for k in ["postgres", "mysql", "redis", "mongodb", "sqlite"]):
         category = "databases"
@@ -57,7 +71,7 @@ class SourceRegistryService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid or prohibited documentation URL: {str(e)}",
-            )
+            ) from e
 
         parsed = urlparse(canonical_url)
         domain = parsed.hostname or ""

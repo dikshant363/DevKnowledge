@@ -1,11 +1,10 @@
-import hashlib
-from typing import Dict, Any, Tuple, Optional
 from datetime import datetime, timezone
-from sqlalchemy import select, and_
+from typing import Any, Dict, Optional, Tuple
+
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from apps.api.app.database.models import (
     DocumentationPage,
-    PageVersion,
     SyncEvent,
 )
 from apps.worker.crawler.extractor import ExtractedDocument
@@ -81,7 +80,9 @@ class ContentChangeDetector:
             status="processed",
             details=details or {},
             detected_at=datetime.now(timezone.utc),
-            published_at=datetime.now(timezone.utc) if classification != ChangeClassification.NO_CHANGE else None,
+            published_at=datetime.now(timezone.utc)
+            if classification != ChangeClassification.NO_CHANGE
+            else None,
         )
         db.add(event)
         await db.commit()

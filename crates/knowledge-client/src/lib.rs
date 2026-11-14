@@ -50,7 +50,13 @@ impl KnowledgeClient {
         if let Some(c) = category {
             payload["category"] = serde_json::json!(c);
         }
-        let resp = self.client.post(&url).json(&payload).send().await?.error_for_status()?;
+        let resp = self
+            .client
+            .post(&url)
+            .json(&payload)
+            .send()
+            .await?
+            .error_for_status()?;
         let source = resp.json::<SourceInfo>().await?;
         Ok(source)
     }

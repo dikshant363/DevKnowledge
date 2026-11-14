@@ -1,7 +1,9 @@
 import hashlib
 import re
-from typing import Dict, List, Optional, Any
-from bs4 import BeautifulSoup, Tag
+from typing import Any, Dict, List
+
+from bs4 import BeautifulSoup
+
 from apps.worker.crawler.adapters.base import select_adapter
 
 
@@ -54,11 +56,13 @@ class ContentExtractor:
                     lang = c.replace("language-", "").replace("lang-", "")
                     break
 
-            code_snippets.append({
-                "language": lang.lower(),
-                "code": code_text.strip(),
-                "line_count": len(code_text.strip().splitlines()),
-            })
+            code_snippets.append(
+                {
+                    "language": lang.lower(),
+                    "code": code_text.strip(),
+                    "line_count": len(code_text.strip().splitlines()),
+                }
+            )
 
         # 2. Extract API Symbols & Deprecations
         api_symbols: List[Dict[str, Any]] = []
@@ -68,19 +72,23 @@ class ContentExtractor:
             if "(" in sig_text or "class " in sig_text or "fn " in sig_text:
                 dd = dt.find_next_sibling("dd")
                 desc = dd.get_text(strip=True) if dd else None
-                is_dep = bool("deprecated" in sig_text.lower() or (desc and "deprecated" in desc.lower()))
+                is_dep = bool(
+                    "deprecated" in sig_text.lower() or (desc and "deprecated" in desc.lower())
+                )
 
                 # Extract symbol name
-                name_match = re.search(r'([A-Za-z0-9_]+)\s*\(', sig_text)
+                name_match = re.search(r"([A-Za-z0-9_]+)\s*\(", sig_text)
                 sym_name = name_match.group(1) if name_match else sig_text.split()[0]
 
-                api_symbols.append({
-                    "name": sym_name,
-                    "symbol_type": "function" if "(" in sig_text else "symbol",
-                    "signature": sig_text,
-                    "description": desc,
-                    "is_deprecated": is_dep,
-                })
+                api_symbols.append(
+                    {
+                        "name": sym_name,
+                        "symbol_type": "function" if "(" in sig_text else "symbol",
+                        "signature": sig_text,
+                        "description": desc,
+                        "is_deprecated": is_dep,
+                    }
+                )
 
         # 3. Extract Section Hierarchy
         sections: List[Dict[str, Any]] = []
@@ -96,13 +104,15 @@ class ContentExtractor:
                 if current_text_parts:
                     content_str = "\n".join(current_text_parts).strip()
                     sec_hash = hashlib.sha256(content_str.encode("utf-8")).hexdigest()
-                    sections.append({
-                        "id": re.sub(r'[^a-z0-9]+', '-', current_heading.lower()).strip('-'),
-                        "heading": current_heading,
-                        "level": current_level,
-                        "content": content_str,
-                        "content_hash": sec_hash,
-                    })
+                    sections.append(
+                        {
+                            "id": re.sub(r"[^a-z0-9]+", "-", current_heading.lower()).strip("-"),
+                            "heading": current_heading,
+                            "level": current_level,
+                            "content": content_str,
+                            "content_hash": sec_hash,
+                        }
+                    )
                     current_text_parts = []
 
                 current_heading = elem.get_text(strip=True)
@@ -130,13 +140,15 @@ class ContentExtractor:
         if current_text_parts:
             content_str = "\n".join(current_text_parts).strip()
             sec_hash = hashlib.sha256(content_str.encode("utf-8")).hexdigest()
-            sections.append({
-                "id": re.sub(r'[^a-z0-9]+', '-', current_heading.lower()).strip('-'),
-                "heading": current_heading,
-                "level": current_level,
-                "content": content_str,
-                "content_hash": sec_hash,
-            })
+            sections.append(
+                {
+                    "id": re.sub(r"[^a-z0-9]+", "-", current_heading.lower()).strip("-"),
+                    "heading": current_heading,
+                    "level": current_level,
+                    "content": content_str,
+                    "content_hash": sec_hash,
+                }
+            )
 
         raw_markdown = "\n".join(markdown_lines).strip()
         doc_hash = hashlib.sha256(raw_markdown.encode("utf-8")).hexdigest()

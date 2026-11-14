@@ -1,12 +1,13 @@
-import pytest
 import uuid
-from httpx import AsyncClient, ASGITransport
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from apps.api.app.database.models import DocumentationPage
+from apps.api.app.database.session import AsyncSessionLocal, Base, engine
 from apps.api.app.main import app
-from apps.api.app.database.session import Base, engine, AsyncSessionLocal
-from apps.api.app.database.models import DocumentationSource, DocumentationPage, SourceSnapshot
-from apps.api.app.compiler.pipeline import CompilerPipeline
-from apps.worker.sync.detector import ContentChangeDetector, ChangeClassification
 from apps.worker.crawler.extractor import ExtractedDocument
+from apps.worker.sync.detector import ChangeClassification, ContentChangeDetector
 
 
 def test_change_classifier():
@@ -71,7 +72,11 @@ async def test_snapshot_diff_and_rollback_workflow():
         # Register user
         reg_res = await client.post(
             "/api/v1/auth/register",
-            json={"email": f"sync_{uid}@devknowledge.dev", "password": "Password123!", "display_name": "Sync Lead"},
+            json={
+                "email": f"sync_{uid}@devknowledge.dev",
+                "password": "Password123!",
+                "display_name": "Sync Lead",
+            },
         )
         token = reg_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
@@ -79,7 +84,10 @@ async def test_snapshot_diff_and_rollback_workflow():
         # Register source
         create_src = await client.post(
             "/api/v1/sources",
-            json={"root_url": f"https://kotlinlang.org/docs-{uid}/home.html", "name": "Kotlin Docs"},
+            json={
+                "root_url": f"https://kotlinlang.org/docs-{uid}/home.html",
+                "name": "Kotlin Docs",
+            },
             headers=headers,
         )
         src_id = create_src.json()["id"]

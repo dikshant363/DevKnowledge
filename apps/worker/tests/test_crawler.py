@@ -1,13 +1,13 @@
-import pytest
+from unittest.mock import AsyncMock
+
 import httpx
-from unittest.mock import AsyncMock, patch
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from apps.api.app.database.models import Base, DocumentationSource, CrawlJob, DocumentationPage
-from apps.worker.crawler.extractor import ContentExtractor
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from apps.api.app.database.models import Base, CrawlJob, DocumentationSource
 from apps.worker.crawler.discovery import DocumentDiscovery
 from apps.worker.crawler.engine import CrawlEngine
-from apps.worker.crawler.safe_client import SafeHTTPClient
-
+from apps.worker.crawler.extractor import ContentExtractor
 
 SAMPLE_DOCUSAURUS_HTML = """
 <!DOCTYPE html>
@@ -76,9 +76,9 @@ def test_content_extractor_mkdocs():
 
 def test_discovery_url_normalization():
     base = "https://developer.android.com/reference/kotlin/"
-    assert DocumentDiscovery.normalize_url(base, "androidx/compose/material3/Button.html#params") == (
-        "https://developer.android.com/reference/kotlin/androidx/compose/material3/Button.html"
-    )
+    assert DocumentDiscovery.normalize_url(
+        base, "androidx/compose/material3/Button.html#params"
+    ) == ("https://developer.android.com/reference/kotlin/androidx/compose/material3/Button.html")
     assert DocumentDiscovery.normalize_url(base, "javascript:void(0)") is None
     assert DocumentDiscovery.normalize_url(base, "#overview") is None
     # Strips tracking params

@@ -1,7 +1,7 @@
 import ipaddress
 import socket
+from typing import Tuple
 from urllib.parse import urlparse
-from typing import Tuple, Optional
 
 
 class SSRFSecurityException(Exception):
@@ -57,7 +57,9 @@ class SSRFValidator:
 
         parsed = urlparse(url.strip())
         if parsed.scheme.lower() not in cls.ALLOWED_SCHEMES:
-            raise SSRFSecurityException(f"Prohibited URL scheme: '{parsed.scheme}'. Only http and https allowed.")
+            raise SSRFSecurityException(
+                f"Prohibited URL scheme: '{parsed.scheme}'. Only http and https allowed."
+            )
 
         hostname = parsed.hostname
         if not hostname:
@@ -72,9 +74,13 @@ class SSRFValidator:
 
         # Resolve DNS addresses
         try:
-            addr_info = socket.getaddrinfo(hostname, parsed.port or (443 if parsed.scheme == "https" else 80))
+            addr_info = socket.getaddrinfo(
+                hostname, parsed.port or (443 if parsed.scheme == "https" else 80)
+            )
         except socket.gaierror as e:
-            raise SSRFSecurityException(f"Failed to resolve DNS for hostname '{hostname}': {e}")
+            raise SSRFSecurityException(
+                f"Failed to resolve DNS for hostname '{hostname}': {e}"
+            ) from e
 
         if not addr_info:
             raise SSRFSecurityException(f"No DNS records found for hostname '{hostname}'")

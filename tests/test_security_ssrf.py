@@ -1,5 +1,6 @@
 import pytest
-from apps.api.app.security.ssrf import SSRFValidator, SSRFSecurityException
+
+from apps.api.app.security.ssrf import SSRFSecurityException, SSRFValidator
 
 
 def test_prohibited_ips():

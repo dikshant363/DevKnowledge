@@ -1,6 +1,8 @@
 from typing import AsyncGenerator
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
+
 from apps.api.app.config import get_settings
 
 settings = get_settings()
@@ -10,7 +12,7 @@ engine = create_async_engine(
     echo=False,
     future=True,
     # Connect args for SQLite support
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {}
+    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
 )
 
 AsyncSessionLocal = async_sessionmaker(

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel, Field, HttpUrl, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CrawlConfig(BaseModel):
@@ -19,10 +20,18 @@ class SyncPolicy(BaseModel):
 
 class SourceCreate(BaseModel):
     root_url: str = Field(description="Root documentation URL to index")
-    name: Optional[str] = Field(default=None, description="Display name. Suggested automatically if omitted.")
-    category: str = Field(default="general", description="Technology category (e.g. mobile, systems, backend)")
-    documentation_type: str = Field(default="official", description="Type of docs (official, community, api_reference)")
-    version: Optional[str] = Field(default=None, description="Preferred documentation version string")
+    name: Optional[str] = Field(
+        default=None, description="Display name. Suggested automatically if omitted."
+    )
+    category: str = Field(
+        default="general", description="Technology category (e.g. mobile, systems, backend)"
+    )
+    documentation_type: str = Field(
+        default="official", description="Type of docs (official, community, api_reference)"
+    )
+    version: Optional[str] = Field(
+        default=None, description="Preferred documentation version string"
+    )
     crawl_config: Optional[CrawlConfig] = Field(default_factory=CrawlConfig)
     sync_policy: Optional[SyncPolicy] = Field(default_factory=SyncPolicy)
 

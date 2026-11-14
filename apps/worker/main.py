@@ -1,8 +1,10 @@
 import asyncio
+
 import structlog
 from sqlalchemy import select
-from apps.api.app.database.session import AsyncSessionLocal
+
 from apps.api.app.database.models import CrawlJob, DocumentationSource
+from apps.api.app.database.session import AsyncSessionLocal
 from apps.worker.crawler.engine import CrawlEngine
 
 logger = structlog.get_logger()

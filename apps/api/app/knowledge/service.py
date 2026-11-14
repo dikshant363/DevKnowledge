@@ -1,23 +1,22 @@
-import re
-from typing import List, Tuple, Optional
-from sqlalchemy import select, and_, or_, func
+from typing import List
+
+from fastapi import HTTPException
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
+
 from apps.api.app.database.models import (
-    DocumentationSource,
     DocumentationPage,
+    DocumentationSource,
     PageVersion,
-    SourceSnapshot,
-    KnowledgeChunk,
 )
 from apps.api.app.knowledge.schemas import (
-    SearchQuery,
-    SearchResultItem,
-    SearchResponse,
-    DocumentDetailResponse,
-    SectionItem,
-    CodeSnippetItem,
     APISymbolItem,
+    CodeSnippetItem,
+    DocumentDetailResponse,
+    SearchQuery,
+    SearchResponse,
+    SearchResultItem,
+    SectionItem,
 )
 
 
@@ -91,7 +90,9 @@ class SearchService:
             if page.title.lower() == q_term:
                 score += 10.0
 
-            snippet = cls.extract_snippet(f"{page.title} - Documentation page at {page.canonical_url}", q_term)
+            snippet = cls.extract_snippet(
+                f"{page.title} - Documentation page at {page.canonical_url}", q_term
+            )
 
             results.append(
                 SearchResultItem(
@@ -158,28 +159,41 @@ class SearchService:
         if latest_ver and latest_ver.structured_content:
             data = latest_ver.structured_content
             for s in data.get("sections", []):
-                sections.append(SectionItem(
-                    id=s.get("id", "section"),
-                    heading=s.get("heading", ""),
-                    level=s.get("level", 1),
-                    content=s.get("content", ""),
-                ))
+                sections.append(
+                    SectionItem(
+                        id=s.get("id", "section"),
+                        heading=s.get("heading", ""),
+                        level=s.get("level", 1),
+                        content=s.get("content", ""),
+                    )
+                )
             for c in data.get("code_snippets", []):
-                code_snippets.append(CodeSnippetItem(
-                    language=c.get("language", "text"),
-                    code=c.get("code", ""),
-                    description=c.get("description"),
-                ))
+                code_snippets.append(
+                    CodeSnippetItem(
+                        language=c.get("language", "text"),
+                        code=c.get("code", ""),
+                        description=c.get("description"),
+                    )
+                )
             for a in data.get("api_symbols", []):
-                api_symbols.append(APISymbolItem(
-                    name=a.get("name", ""),
-                    signature=a.get("signature", ""),
-                    description=a.get("description"),
-                    is_deprecated=a.get("is_deprecated", False),
-                ))
+                api_symbols.append(
+                    APISymbolItem(
+                        name=a.get("name", ""),
+                        signature=a.get("signature", ""),
+                        description=a.get("description"),
+                        is_deprecated=a.get("is_deprecated", False),
+                    )
+                )
 
         if not sections:
-            sections.append(SectionItem(id="overview", heading=page.title, level=1, content=f"Official docs for {page.title}"))
+            sections.append(
+                SectionItem(
+                    id="overview",
+                    heading=page.title,
+                    level=1,
+                    content=f"Official docs for {page.title}",
+                )
+            )
 
         return DocumentDetailResponse(
             id=page.id,

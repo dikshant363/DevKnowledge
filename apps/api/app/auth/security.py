@@ -1,13 +1,15 @@
-import bcrypt
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any, Tuple
+from typing import Any, Dict, Optional, Tuple
+
+import bcrypt
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from apps.api.app.config import get_settings
-from apps.api.app.database.models import User, Organization, OrganizationMember
+from apps.api.app.database.models import Organization, OrganizationMember, User
 from apps.api.app.database.session import get_db
 
 settings = get_settings()
@@ -35,7 +37,9 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
 
@@ -80,7 +84,9 @@ async def get_current_user_and_org(
         )
         membership_row = mem_result.first()
         if not membership_row:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No organization membership found")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="No organization membership found"
+            )
 
         member, org = membership_row
         return user, org, member.role

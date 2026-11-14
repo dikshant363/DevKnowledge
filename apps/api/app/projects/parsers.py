@@ -1,11 +1,12 @@
 import json
 import re
-from typing import List, Dict, Any, Optional
+from typing import List
+
 from pydantic import BaseModel
 
 
 class ParsedDependency(BaseModel):
-    ecosystem: str # npm, cargo, pypi, maven, spm
+    ecosystem: str  # npm, cargo, pypi, maven, spm
     package_name: str
     version_constraint: str
 
@@ -27,7 +28,9 @@ class DependencyManifestParser:
                 all_deps.update(data["devDependencies"])
 
             for pkg, ver in all_deps.items():
-                deps.append(ParsedDependency(ecosystem="npm", package_name=pkg, version_constraint=str(ver)))
+                deps.append(
+                    ParsedDependency(ecosystem="npm", package_name=pkg, version_constraint=str(ver))
+                )
         except Exception:
             pass
         return deps
@@ -48,7 +51,11 @@ class DependencyManifestParser:
                 # Check simple string version e.g. tokio = "1.0"
                 ver_match = re.search(r'["\']([^"\']+)["\']', val)
                 version = ver_match.group(1) if ver_match else "*"
-                deps.append(ParsedDependency(ecosystem="cargo", package_name=pkg, version_constraint=version))
+                deps.append(
+                    ParsedDependency(
+                        ecosystem="cargo", package_name=pkg, version_constraint=version
+                    )
+                )
         return deps
 
     @classmethod
@@ -59,11 +66,13 @@ class DependencyManifestParser:
             if not line or line.startswith(("#", "-")):
                 continue
             # Match package==1.2.3 or package>=1.2.3
-            match = re.split(r'(==|>=|<=|~=|>|<)', line)
+            match = re.split(r"(==|>=|<=|~=|>|<)", line)
             if match:
                 pkg = match[0].strip()
                 ver = "".join(match[1:]).strip() if len(match) > 1 else "*"
-                deps.append(ParsedDependency(ecosystem="pypi", package_name=pkg, version_constraint=ver))
+                deps.append(
+                    ParsedDependency(ecosystem="pypi", package_name=pkg, version_constraint=ver)
+                )
         return deps
 
     @classmethod
@@ -73,7 +82,11 @@ class DependencyManifestParser:
         dep_matches = re.findall(r'["\']([a-zA-Z0-9_\-]+)(?:([><=~!]+[^"\']+))?["\']', content)
         for pkg, ver in dep_matches:
             if pkg not in ("hatchling", "setuptools", "wheel", "py312", "E", "F", "W"):
-                deps.append(ParsedDependency(ecosystem="pypi", package_name=pkg, version_constraint=ver or "*"))
+                deps.append(
+                    ParsedDependency(
+                        ecosystem="pypi", package_name=pkg, version_constraint=ver or "*"
+                    )
+                )
         return deps
 
     @classmethod

@@ -1,5 +1,5 @@
 import re
-from typing import Optional, List, Dict, Any
+
 from bs4 import BeautifulSoup, Tag
 
 
@@ -12,7 +12,9 @@ class BaseDocumentationAdapter:
     def extract_main_container(self, soup: BeautifulSoup) -> Tag:
         """Fallback: searches for semantic main containers and strips noise"""
         # Remove navigation, headers, footers, scripts, styles
-        for tag in soup(["script", "style", "nav", "header", "footer", "aside", "noscript", "iframe"]):
+        for tag in soup(
+            ["script", "style", "nav", "header", "footer", "aside", "noscript", "iframe"]
+        ):
             tag.decompose()
 
         # Find main content container
@@ -76,11 +78,7 @@ class VitePressAdapter(BaseDocumentationAdapter):
     name: str = "vitepress"
 
     def detect(self, html: str) -> bool:
-        return bool(
-            "VPDoc" in html
-            or "vp-doc" in html
-            or "vitepress" in html.lower()
-        )
+        return bool("VPDoc" in html or "vp-doc" in html or "vitepress" in html.lower())
 
     def extract_main_container(self, soup: BeautifulSoup) -> Tag:
         container = soup.select_one(".VPDoc .vp-doc") or soup.select_one(".VPDoc")
@@ -112,7 +110,7 @@ ALL_ADAPTERS = [
     MkDocsAdapter(),
     VitePressAdapter(),
     SphinxAdapter(),
-    BaseDocumentationAdapter(), # generic fallback
+    BaseDocumentationAdapter(),  # generic fallback
 ]
 
 

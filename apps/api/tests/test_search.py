@@ -1,9 +1,11 @@
-import pytest
 import uuid
-from httpx import AsyncClient, ASGITransport
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from apps.api.app.database.models import DocumentationPage
+from apps.api.app.database.session import AsyncSessionLocal, Base, engine
 from apps.api.app.main import app
-from apps.api.app.database.session import Base, engine, AsyncSessionLocal
-from apps.api.app.database.models import DocumentationSource, DocumentationPage
 
 
 @pytest.mark.asyncio
@@ -17,17 +19,27 @@ async def test_search_and_retrieval_workflow():
         uid_a = uuid.uuid4().hex[:6]
         res_a = await client.post(
             "/api/v1/auth/register",
-            json={"email": f"search_a_{uid_a}@devknowledge.dev", "password": "Password123!", "display_name": "Dev A"},
+            json={
+                "email": f"search_a_{uid_a}@devknowledge.dev",
+                "password": "Password123!",
+                "display_name": "Dev A",
+            },
         )
         token_a = res_a.json()["access_token"]
         headers_a = {"Authorization": f"Bearer {token_a}"}
 
         # 2. Register Source in Org A
-        src_a = (await client.post(
-            "/api/v1/sources",
-            json={"root_url": f"https://rust-lang.org/learn-{uid_a}", "name": "Rust Systems Guide", "category": "systems-programming"},
-            headers=headers_a,
-        )).json()
+        src_a = (
+            await client.post(
+                "/api/v1/sources",
+                json={
+                    "root_url": f"https://rust-lang.org/learn-{uid_a}",
+                    "name": "Rust Systems Guide",
+                    "category": "systems-programming",
+                },
+                headers=headers_a,
+            )
+        ).json()
         src_a_id = src_a["id"]
 
         # Insert page into Org A
@@ -76,7 +88,11 @@ async def test_search_and_retrieval_workflow():
         uid_b = uuid.uuid4().hex[:6]
         res_b = await client.post(
             "/api/v1/auth/register",
-            json={"email": f"search_b_{uid_b}@devknowledge.dev", "password": "Password123!", "display_name": "Dev B"},
+            json={
+                "email": f"search_b_{uid_b}@devknowledge.dev",
+                "password": "Password123!",
+                "display_name": "Dev B",
+            },
         )
         token_b = res_b.json()["access_token"]
         headers_b = {"Authorization": f"Bearer {token_b}"}

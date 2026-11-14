@@ -1,18 +1,16 @@
 import pytest
-import uuid
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 from apps.api.app.database.models import (
     Base,
-    User,
+    DocumentationPage,
+    DocumentationSource,
+    KnowledgeChunk,
     Organization,
     OrganizationMember,
-    DocumentationSource,
-    DocumentationPage,
-    SourceSnapshot,
     PageVersion,
-    KnowledgeChunk,
-    APISymbolModel,
-    CodeExampleModel,
+    SourceSnapshot,
+    User,
 )
 
 
@@ -115,7 +113,9 @@ async def test_documentation_source_and_pages(async_session: AsyncSession):
         snapshot_id=snapshot.id,
         content_hash="hash_ch01_v1",
         extracted_content="# Getting Started\nWelcome to Rust.",
-        structured_content={"sections": [{"heading": "Getting Started", "content": "Welcome to Rust."}]},
+        structured_content={
+            "sections": [{"heading": "Getting Started", "content": "Welcome to Rust."}]
+        },
         source_metadata={"url": page.canonical_url},
     )
     async_session.add(page_ver)

@@ -2,13 +2,13 @@
 
 | Milestone | Title | Status | Scope |
 |---|---|---|---|
-| **M0** | **Engineering Foundation** | In Progress | Repository, CI baseline, ADRs, Database setup, Threat model |
-| **M1** | **Documentation Registry** | Planned | URL registration, auth/RBAC, categorization, crawl configuration |
-| **M2** | **Universal Crawler** | Planned | SSRF-safe crawler, sitemap parser, framework adapters, Playwright fallback |
-| **M3** | **Canonical Knowledge Compiler** | Planned | CKR normalization, llms.txt, AGENTS.md, SKILL.md, Markdown outputs |
-| **M4** | **Automatic Synchronization** | Planned | Change detector, hash diffing, atomic snapshot publishing, rollback |
-| **M5** | **Search & Knowledge Retrieval** | Planned | Full-text search (PostgreSQL), semantic vector retrieval, hybrid ranker |
-| **M6** | **MCP Integration** | Planned | Model Context Protocol server (tools, resources, prompt templates) |
-| **M7** | **Local Runtime & CLI** | Planned | Cross-platform Rust CLI, SQLite offline cache, local MCP bridge |
-| **M8** | **Project Intelligence** | Planned | Dependency parser (package.json, Cargo.toml), version pinning |
-| **M9** | **Production Release** | Planned | Production docker configurations, backup verification, test suite sign-off |
+| **M0** | **Engineering Foundation** | **Completed** | Monorepo setup, CI baseline, 5 ADRs, Database setup, Threat model, Rust & Python workspaces |
+| **M1** | **Documentation Registry** | **Completed** | URL registration, auth/RBAC, categorization, crawl configuration, tenant isolation |
+| **M2** | **Universal Crawler** | **Completed** | SSRF-safe crawler, sitemap parser, framework adapters (Docusaurus, MkDocs, Sphinx, Generic), link discovery |
+| **M3** | **Canonical Knowledge Compiler** | **Completed** | CKR normalization, llms.txt, llms-full.txt, AGENTS.md, SKILL.md, immutable release snapshots |
+| **M4** | **Automatic Synchronization** | **Completed** | Change detector, hash diffing, sync audit trail, atomic publishing, rollback capability |
+| **M5** | **Search & Knowledge Retrieval** | **Completed** | Full-text search, hybrid relevance ranking, provenance citations, tenant boundary enforcement |
+| **M6** | **MCP Integration** | **Completed** | Model Context Protocol server (10 read-only tools, resource templates, stdio client test) |
+| **M7** | **Local Runtime & CLI** | **Completed** | Cross-platform Rust CLI (`devknowledge`), SQLite offline cache, status, doctor, login/logout |
+| **M8** | **Project Intelligence** | **Completed** | Dependency parser (package.json, Cargo.toml, pyproject.toml), version pinning, compatibility warnings |
+| **M9** | **Production Release** | **Completed** | Prometheus metrics endpoint, backup & restore verification, full E2E system sign-off |

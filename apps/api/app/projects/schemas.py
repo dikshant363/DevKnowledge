@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProjectCreate(BaseModel):
@@ -48,7 +49,7 @@ class VersionWarning(BaseModel):
     declared_version: str
     source_name: Optional[str] = None
     available_version: Optional[str] = None
-    warning_type: str # version_mismatch, missing_documentation, deprecated_version
+    warning_type: str  # version_mismatch, missing_documentation, deprecated_version
     message: str
 
 
