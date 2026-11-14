@@ -37,7 +37,7 @@ async def async_session():
 @pytest.mark.asyncio
 async def test_create_user_and_org(async_session: AsyncSession):
     user = User(
-        email="test@devknowledge.local",
+        email="test@devknowledge.dev",
         password_hash="hashed_pw_123",
         display_name="Test Developer",
         account_status="active",
@@ -68,7 +68,7 @@ async def test_create_user_and_org(async_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_documentation_source_and_pages(async_session: AsyncSession):
-    user = User(email="author@devknowledge.local", password_hash="hash", display_name="Author")
+    user = User(email="author@devknowledge.dev", password_hash="hash", display_name="Author")
     async_session.add(user)
     await async_session.flush()
 
