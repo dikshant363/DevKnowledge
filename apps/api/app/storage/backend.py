@@ -217,13 +217,95 @@ class R2StorageBackend(StorageBackend):
             return 0
 
 
+class SupabaseStorageBackend(StorageBackend):
+    """
+    Supabase Storage backend using REST API.
+    Free tier: 1 GB storage, 2 GB egress/month.
+    """
+
+    def __init__(
+        self,
+        project_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        bucket_name: Optional[str] = None,
+    ):
+        settings = get_settings()
+        self.project_url = (project_url or settings.SUPABASE_URL or "").rstrip("/")
+        self.api_key = api_key or settings.SUPABASE_KEY or ""
+        self.bucket_name = bucket_name or settings.SUPABASE_BUCKET_NAME
+        self.headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "apikey": self.api_key,
+        }
+
+    async def put_object(self, key: str, data: bytes | str, content_type: str = "text/plain") -> str:
+        clean_key = key.lstrip("/")
+        payload = data.encode("utf-8") if isinstance(data, str) else data
+        url = f"{self.project_url}/storage/v1/object/{self.bucket_name}/{clean_key}"
+        headers = {**self.headers, "Content-Type": content_type}
+
+        import httpx
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(url, headers=headers, content=payload)
+            if resp.status_code == 400 and ("already exists" in resp.text.lower() or "duplicate" in resp.text.lower()):
+                resp = await client.put(url, headers=headers, content=payload)
+            resp.raise_for_status()
+
+        return f"{self.project_url}/storage/v1/object/public/{self.bucket_name}/{clean_key}"
+
+    async def get_object(self, key: str) -> bytes:
+        clean_key = key.lstrip("/")
+        url = f"{self.project_url}/storage/v1/object/public/{self.bucket_name}/{clean_key}"
+
+        import httpx
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.get(url)
+            if resp.status_code == 404:
+                raise FileNotFoundError(f"Storage object not found: {key}")
+            resp.raise_for_status()
+            return resp.content
+
+    async def delete_object(self, key: str) -> bool:
+        clean_key = key.lstrip("/")
+        url = f"{self.project_url}/storage/v1/object/{self.bucket_name}/{clean_key}"
+
+        import httpx
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.delete(url, headers=self.headers)
+            return resp.status_code in (200, 204)
+
+    async def exists(self, key: str) -> bool:
+        clean_key = key.lstrip("/")
+        url = f"{self.project_url}/storage/v1/object/public/{self.bucket_name}/{clean_key}"
+
+        import httpx
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.head(url)
+            return resp.status_code == 200
+
+    async def get_total_usage_bytes(self) -> int:
+        return 0
+
+
 def get_storage_backend(settings: Optional[Settings] = None) -> StorageBackend:
     """
     Factory resolving the active storage backend.
-    Supports Local, Cloudflare R2, Supabase Storage (S3-compatible), and standard S3.
+    Supports Local, Cloudflare R2, Supabase Storage (REST & S3-compatible), and standard S3.
     """
     cfg = settings or get_settings()
     backend_type = cfg.STORAGE_BACKEND.lower()
+
+    if backend_type == "supabase" and cfg.SUPABASE_URL and cfg.SUPABASE_KEY:
+        return SupabaseStorageBackend(
+            project_url=cfg.SUPABASE_URL,
+            api_key=cfg.SUPABASE_KEY,
+            bucket_name=cfg.SUPABASE_BUCKET_NAME,
+        )
+
     if (
         backend_type in ("r2", "s3", "supabase")
         and cfg.R2_ACCESS_KEY_ID

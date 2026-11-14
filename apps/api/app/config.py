@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     PLAYWRIGHT_HEADLESS: bool = True
     ALLOW_PRIVATE_IPS: bool = False
 
-    # Storage Backend Configuration (Local or Cloudflare R2)
-    STORAGE_BACKEND: str = "local"  # "local" or "r2"
+    # Storage Backend Configuration (Local, Cloudflare R2, or Supabase)
+    STORAGE_BACKEND: str = "supabase"  # "local", "r2", or "supabase"
     ARTIFACTS_DIR: str = "./storage/artifacts"
     EXPORT_DIR: str = "./storage/exports"
     R2_ACCOUNT_ID: Optional[str] = None
@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     R2_BUCKET_NAME: str = "devknowledge-artifacts"
     R2_ENDPOINT_URL: Optional[str] = None
     R2_PUBLIC_URL: Optional[str] = None
+
+    # Supabase Configuration
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_KEY: Optional[str] = None
+    SUPABASE_BUCKET_NAME: str = "devknowledge-artifacts"
 
     # Upstash Redis Configuration (Optional Serverless Redis)
     UPSTASH_REDIS_REST_URL: Optional[str] = None
