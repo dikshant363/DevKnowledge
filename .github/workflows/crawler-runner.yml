@@ -45,7 +45,7 @@ jobs:
 
       - name: Install Playwright & Browsers (Fallback extraction)
         run: |
-          uv run playwright install --with-deps chromium
+          uv run python -m playwright install --with-deps chromium
 
       - name: Execute Crawler Worker
         env:
@@ -53,7 +53,10 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DATABASE_URL_SYNC: ${{ secrets.DATABASE_URL_SYNC }}
           RUNNER_API_KEY: ${{ secrets.RUNNER_API_KEY }}
-          STORAGE_BACKEND: ${{ secrets.STORAGE_BACKEND || 'r2' }}
+          STORAGE_BACKEND: ${{ secrets.STORAGE_BACKEND || 'supabase' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_BUCKET_NAME: ${{ secrets.SUPABASE_BUCKET_NAME || 'devknowledge-artifacts' }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
