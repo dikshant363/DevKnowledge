@@ -25,8 +25,34 @@ impl KnowledgeClient {
     pub async fn list_sources(&self) -> Result<Vec<SourceInfo>> {
         let url = format!("{}/api/v1/sources", self.base_url);
         let resp = self.client.get(&url).send().await?.error_for_status()?;
-        let sources = resp.json::<Vec<SourceInfo>>().await?;
-        Ok(sources)
+        let body = resp.json::<serde_json::Value>().await?;
+        let items = if let Some(arr) = body.get("items") {
+            serde_json::from_value::<Vec<SourceInfo>>(arr.clone())?
+        } else {
+            serde_json::from_value::<Vec<SourceInfo>>(body)?
+        };
+        Ok(items)
+    }
+
+    pub async fn register_source(
+        &self,
+        root_url: &str,
+        name: Option<&str>,
+        category: Option<&str>,
+    ) -> Result<SourceInfo> {
+        let url = format!("{}/api/v1/sources", self.base_url);
+        let mut payload = serde_json::json!({
+            "root_url": root_url,
+        });
+        if let Some(n) = name {
+            payload["name"] = serde_json::json!(n);
+        }
+        if let Some(c) = category {
+            payload["category"] = serde_json::json!(c);
+        }
+        let resp = self.client.post(&url).json(&payload).send().await?.error_for_status()?;
+        let source = resp.json::<SourceInfo>().await?;
+        Ok(source)
     }
 
     pub async fn get_manifest(&self, source_id: Uuid) -> Result<SnapshotManifest> {

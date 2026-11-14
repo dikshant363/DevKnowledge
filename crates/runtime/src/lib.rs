@@ -1,14 +1,22 @@
 use anyhow::Result;
 use cache::LocalCache;
 use directories::ProjectDirs;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct LocalConfig {
+    pub server_url: String,
+    pub api_token: Option<String>,
+}
 
 pub struct RuntimeEnvironment {
     pub base_dir: PathBuf,
     pub config_dir: PathBuf,
     pub database_path: PathBuf,
     pub cache_dir: PathBuf,
+    pub config_path: PathBuf,
 }
 
 impl RuntimeEnvironment {
@@ -29,16 +37,43 @@ impl RuntimeEnvironment {
         fs::create_dir_all(&cache_dir)?;
 
         let database_path = database_dir.join("knowledge.db");
+        let config_path = config_dir.join("config.json");
 
         Ok(Self {
             base_dir,
             config_dir,
             database_path,
             cache_dir,
+            config_path,
         })
     }
 
     pub fn open_cache(&self) -> Result<LocalCache> {
         LocalCache::open(&self.database_path)
+    }
+
+    pub fn save_config(&self, config: &LocalConfig) -> Result<()> {
+        let json = serde_json::to_string_pretty(config)?;
+        fs::write(&self.config_path, json)?;
+        Ok(())
+    }
+
+    pub fn load_config(&self) -> LocalConfig {
+        if let Ok(content) = fs::read_to_string(&self.config_path) {
+            if let Ok(cfg) = serde_json::from_str::<LocalConfig>(&content) {
+                return cfg;
+            }
+        }
+        LocalConfig {
+            server_url: "http://localhost:8000".to_string(),
+            api_token: None,
+        }
+    }
+
+    pub fn clear_credentials(&self) -> Result<()> {
+        if self.config_path.exists() {
+            fs::remove_file(&self.config_path)?;
+        }
+        Ok(())
     }
 }

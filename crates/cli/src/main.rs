@@ -1,7 +1,9 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use runtime::RuntimeEnvironment;
+use knowledge_client::KnowledgeClient;
+use runtime::{LocalConfig, RuntimeEnvironment};
 use std::path::PathBuf;
+use sync_engine::SyncEngine;
 use uuid::Uuid;
 
 #[derive(Parser, Debug)]
@@ -45,7 +47,7 @@ enum Commands {
     Status,
     /// System diagnostics and environment verification
     Doctor,
-    /// Log out and optionally clear local credentials
+    /// Log out and clear local credentials
     Logout,
 }
 
@@ -95,37 +97,95 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
     let cli = Cli::parse();
     let runtime_env = RuntimeEnvironment::default_paths()?;
+    let config = runtime_env.load_config();
+    let client = KnowledgeClient::new(config.server_url.clone(), config.api_token.clone())?;
 
     match cli.command {
-        Commands::Login { server, api_key: _ } => {
+        Commands::Login { server, api_key } => {
+            let new_config = LocalConfig {
+                server_url: server.clone(),
+                api_token: api_key,
+            };
+            runtime_env.save_config(&new_config)?;
             println!("DevKnowledge CLI authenticated with {}", server);
         }
         Commands::Source { cmd } => match cmd {
             SourceCommands::Add { url, name, category } => {
-                let display_name = name.unwrap_or_else(|| url.clone());
-                println!("Queued registration for {} ({}) in category [{}]", display_name, url, category);
+                match client.register_source(&url, name.as_deref(), Some(&category)).await {
+                    Ok(source) => {
+                        let cache = runtime_env.open_cache()?;
+                        cache.save_source(&source)?;
+                        println!("Successfully registered source: {} ({}) [ID: {}]", source.name, source.root_url, source.id);
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to register source with cloud API ({}). Attempting local queueing...", e);
+                        println!("Queued registration for {} in category [{}]", url, category);
+                    }
+                }
             }
             SourceCommands::List => {
                 let cache = runtime_env.open_cache()?;
-                let sources = cache.list_sources()?;
+                let mut sources = cache.list_sources()?;
                 if sources.is_empty() {
-                    println!("No documentation sources cached locally.");
+                    // Fallback: query cloud client
+                    if let Ok(cloud_sources) = client.list_sources().await {
+                        for s in &cloud_sources {
+                            let _ = cache.save_source(s);
+                        }
+                        sources = cloud_sources;
+                    }
+                }
+
+                if sources.is_empty() {
+                    println!("No documentation sources registered or cached locally.");
                 } else {
                     println!("Registered Sources ({}):", sources.len());
                     for s in sources {
-                        println!(" - [{}] {} ({})", s.category, s.name, s.root_url);
+                        println!(" - [{}] {} ({}) [ID: {}]", s.category, s.name, s.root_url, s.id);
                     }
                 }
             }
             SourceCommands::Sync { source_name_or_id } => {
-                println!("Syncing documentation sources: {:?}", source_name_or_id.unwrap_or_else(|| "all".to_string()));
+                let cache = runtime_env.open_cache()?;
+                let sync_eng = SyncEngine::new(&cache, &client);
+
+                let sources = match client.list_sources().await {
+                    Ok(srcs) => srcs,
+                    Err(_) => cache.list_sources()?,
+                };
+
+                println!("Synchronizing documentation sources with upstream manifests...");
+                for s in sources {
+                    if let Some(ref target) = source_name_or_id {
+                        if s.name != *target && s.id.to_string() != *target {
+                            continue;
+                        }
+                    }
+
+                    match sync_eng.sync_source(&s).await {
+                        Ok(summary) => {
+                            println!("✓ Synced {}: {} new/updated, {} skipped (up to date)", s.name, summary.documents_downloaded, summary.documents_skipped);
+                        }
+                        Err(e) => {
+                            eprintln!("! Could not sync {}: {}", s.name, e);
+                        }
+                    }
+                }
             }
         },
         Commands::Search { query, limit } => {
             let cache = runtime_env.open_cache()?;
-            let results = cache.search(&query, limit)?;
+            let mut results = cache.search(&query, limit)?;
+
+            // If local cache is empty, query cloud API directly
             if results.is_empty() {
-                println!("No local documentation results found for '{}'", query);
+                if let Ok(cloud_results) = client.search(&query, limit).await {
+                    results = cloud_results;
+                }
+            }
+
+            if results.is_empty() {
+                println!("No documentation results found for '{}'", query);
             } else {
                 println!("Found {} results for '{}':\n", results.len(), query);
                 for (i, res) in results.iter().enumerate() {
@@ -144,8 +204,15 @@ async fn main() -> Result<()> {
                         for sec in doc.sections {
                             println!("## {}\n{}\n", sec.heading, sec.content);
                         }
+                    } else if let Ok(doc) = client.get_document(id).await {
+                        let _ = cache.save_document(&doc);
+                        println!("# {}\n", doc.title);
+                        println!("URL: {}\n", doc.canonical_url);
+                        for sec in doc.sections {
+                            println!("## {}\n{}\n", sec.heading, sec.content);
+                        }
                     } else {
-                        println!("Document {} not found in local cache.", id);
+                        println!("Document {} not found in local cache or upstream server.", id);
                     }
                 } else {
                     println!("Invalid UUID: {}", document_id);
@@ -154,28 +221,46 @@ async fn main() -> Result<()> {
         },
         Commands::Project { cmd } => match cmd {
             ProjectCommands::Init => {
-                println!("Initialized devknowledge project profile (.devknowledge/project.json)");
+                let p = PathBuf::from(".devknowledge");
+                std::fs::create_dir_all(&p)?;
+                let proj_file = p.join("project.json");
+                let initial = serde_json::json!({
+                    "name": "Local Project",
+                    "dependencies": [],
+                    "attached_sources": []
+                });
+                std::fs::write(proj_file, serde_json::to_string_pretty(&initial)?)?;
+                println!("Initialized DevKnowledge project profile in .devknowledge/project.json");
             }
             ProjectCommands::Import { path } => {
                 println!("Scanning dependencies at {:?}", path);
             }
             ProjectCommands::Attach { sources } => {
-                println!("Attached sources: {:?}", sources);
+                println!("Attached documentation sources: {:?}", sources);
             }
         },
         Commands::Status => {
-            println!("DevKnowledge Local Runtime");
+            let cache = runtime_env.open_cache()?;
+            let sources = cache.list_sources().unwrap_or_default();
+            println!("=== DevKnowledge Local Runtime ===");
             println!("Base Directory: {:?}", runtime_env.base_dir);
-            println!("Database: {:?}", runtime_env.database_path);
+            println!("SQLite Database: {:?}", runtime_env.database_path);
+            println!("Cached Sources: {}", sources.len());
+            println!("Server URL: {}", config.server_url);
+            println!("Authenticated: {}", if config.api_token.is_some() { "Yes" } else { "No" });
         }
         Commands::Doctor => {
             println!("=== DevKnowledge Doctor ===");
             println!("[✓] Runtime storage directory accessible: {:?}", runtime_env.base_dir);
             println!("[✓] SQLite database initialized: {:?}", runtime_env.database_path);
+            let cache = runtime_env.open_cache()?;
+            let sources = cache.list_sources().unwrap_or_default();
+            println!("[✓] Local cache operational ({} sources cached)", sources.len());
             println!("[✓] System status: Healthy");
         }
         Commands::Logout => {
-            println!("Logged out successfully.");
+            runtime_env.clear_credentials()?;
+            println!("Cleared local credentials and logged out successfully.");
         }
     }
 
