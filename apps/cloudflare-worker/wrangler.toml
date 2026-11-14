@@ -1,3 +1,4 @@
+account_id = "71a28876b8f548628f5bc54e1f33f6d6"
 name = "devknowledge-gateway"
 main = "src/index.ts"
 compatibility_date = "2024-09-23"
@@ -8,8 +9,8 @@ crons = ["*/15 * * * *"]
 
 [vars]
 ENVIRONMENT = "production"
-GITHUB_REPOSITORY = "owner/devknowledge"
-API_ORIGIN = "https://api.devknowledge.dev"
+GITHUB_REPOSITORY = "dikshant363/DevKnowledge"
+API_ORIGIN = "https://hlnbfjdhedkbrnrvkswm.supabase.co"
 
 # The following secrets are set via `wrangler secret put <KEY>`:
 # NEON_DATABASE_URL
