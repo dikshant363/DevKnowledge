@@ -1,0 +1,56 @@
+# DevKnowledge .gitignore
+
+# Dependencies
+node_modules/
+.pnpm-store/
+target/
+Cargo.lock.dist
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
+*.egg-info/
+.eggs/
+
+# IDE & OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.enc
+credentials.enc
+
+# Logs & Diagnostics
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local database and cache storage
+*.db
+*.sqlite
+*.sqlite3
+storage/
+local_data/
+~/.devknowledge/

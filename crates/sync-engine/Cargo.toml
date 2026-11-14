@@ -1,0 +1,16 @@
+[package]
+name = "sync-engine"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+shared-types = { path = "../shared-types" }
+cache = { path = "../cache" }
+knowledge-client = { path = "../knowledge-client" }
+tokio.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+uuid.workspace = true

@@ -1,0 +1,22 @@
+{
+  "name": "@devknowledge/mcp-server",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "bin": {
+    "devknowledge-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "echo 'No tests yet in mcp-server'"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@devknowledge/canonical-schema": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "typescript": "^5.4.5"
+  }
+}

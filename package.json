@@ -1,0 +1,17 @@
+{
+  "name": "devknowledge-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DevKnowledge - Universal AI Developer Knowledge Infrastructure",
+  "scripts": {
+    "dev": "pnpm --filter @devknowledge/web dev",
+    "build": "pnpm --recursive run build",
+    "test": "pnpm --recursive run test",
+    "lint": "pnpm --recursive run lint",
+    "typecheck": "pnpm --recursive run typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  },
+  "packageManager": "pnpm@11.22.0"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@devknowledge/canonical-schema",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo 'No tests yet in canonical-schema'"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

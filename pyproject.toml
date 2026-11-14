@@ -1,0 +1,62 @@
+[project]
+name = "devknowledge"
+version = "0.1.0"
+description = "DevKnowledge - Universal AI Developer Knowledge Infrastructure"
+authors = [{ name = "DevKnowledge Core Team", email = "team@devknowledge.local" }]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "sqlalchemy>=2.0.30",
+    "alembic>=1.13.0",
+    "asyncpg>=0.29.0",
+    "aiosqlite>=0.20.0",
+    "psycopg[binary]>=3.1.18",
+    "httpx>=0.27.0",
+    "selectolax>=0.3.21",
+    "beautifulsoup4>=4.12.3",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.9",
+    "redis>=5.0.4",
+    "arq>=0.26.0",
+    "rich>=13.7.1",
+    "structlog>=24.1.0",
+    "tenacity>=8.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.6",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.4.4",
+    "mypy>=1.10.0",
+    "playwright>=1.44.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["apps/api", "apps/worker", "packages"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-q --tb=short"
+testpaths = ["tests", "apps/api/tests", "apps/worker/tests"]
+asyncio_mode = "auto"
+pythonpath = [".", "apps/api", "apps/worker"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [".venv", "dist", "build", "migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = ["E501"]

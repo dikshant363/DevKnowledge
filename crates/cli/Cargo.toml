@@ -1,0 +1,26 @@
+[package]
+name = "cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "devknowledge"
+path = "src/main.rs"
+
+[dependencies]
+shared-types = { path = "../shared-types" }
+cache = { path = "../cache" }
+knowledge-client = { path = "../knowledge-client" }
+sync-engine = { path = "../sync-engine" }
+runtime = { path = "../runtime" }
+clap.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
