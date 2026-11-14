@@ -1,0 +1,65 @@
+name: DevKnowledge Crawler & Sync Runner
+
+on:
+  schedule:
+    # Run every 30 minutes to claim pending or overdue sync jobs
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      source_id:
+        description: 'Specific Documentation Source ID to crawl (optional)'
+        required: false
+        type: string
+  repository_dispatch:
+    # Triggered automatically by Cloudflare Workers API Gateway
+    types: [devknowledge-crawl]
+
+concurrency:
+  group: devknowledge-crawler
+  cancel-in-progress: false
+
+jobs:
+  run-crawler:
+    name: Claim & Execute Crawl Job
+    runs-on: ubuntu-latest
+    timeout-minutes: 25 # Safeguard: stay safely within free-tier runner limits
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install uv Package Manager
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Python Dependencies
+        run: |
+          uv sync --frozen --dev
+
+      - name: Install Playwright & Browsers (Fallback extraction)
+        run: |
+          uv run playwright install --with-deps chromium
+
+      - name: Execute Crawler Worker
+        env:
+          DEVKNOWLEDGE_API_URL: ${{ secrets.DEVKNOWLEDGE_API_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_SYNC: ${{ secrets.DATABASE_URL_SYNC }}
+          RUNNER_API_KEY: ${{ secrets.RUNNER_API_KEY }}
+          STORAGE_BACKEND: ${{ secrets.STORAGE_BACKEND || 'r2' }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME || 'devknowledge-artifacts' }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+        run: |
+          uv run python -m apps.worker.runner

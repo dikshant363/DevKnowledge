@@ -1,7 +1,6 @@
 import hashlib
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import List
 
 from sqlalchemy import and_, func, select
@@ -21,6 +20,7 @@ from apps.api.app.database.models import (
     GeneratedArtifact,
     SourceSnapshot,
 )
+from apps.api.app.storage.backend import get_storage_backend
 
 settings = get_settings()
 
@@ -113,66 +113,70 @@ class CompilerPipeline:
         db.add(snapshot)
         await db.flush()
 
-        # 6. Generate artifacts on disk
-        artifact_base_dir = Path(settings.ARTIFACTS_DIR) / source.id / snapshot.id
-        artifact_base_dir.mkdir(parents=True, exist_ok=True)
+        # 6. Generate artifacts via storage backend (supports local and Cloudflare R2)
+        storage = get_storage_backend()
+        storage_prefix = f"{source.id}/{snapshot.id}"
 
         # A. llms.txt
         llms_txt = LLMsTxtCompiler.compile(source.name, source.root_url, ckr_docs)
-        llms_txt_path = artifact_base_dir / "llms.txt"
-        llms_txt_path.write_text(llms_txt, encoding="utf-8")
+        llms_txt_loc = await storage.put_object(
+            f"{storage_prefix}/llms.txt", llms_txt, "text/plain"
+        )
         db.add(
             GeneratedArtifact(
                 source_id=source.id,
                 snapshot_id=snapshot.id,
                 artifact_type="llms_txt",
                 artifact_version="1.0.0",
-                storage_location=str(llms_txt_path),
+                storage_location=llms_txt_loc,
                 checksum=hashlib.sha256(llms_txt.encode("utf-8")).hexdigest(),
             )
         )
 
         # B. llms-full.txt
         llms_full_txt = LLMsFullTxtCompiler.compile(source.name, ckr_docs)
-        llms_full_path = artifact_base_dir / "llms-full.txt"
-        llms_full_path.write_text(llms_full_txt, encoding="utf-8")
+        llms_full_loc = await storage.put_object(
+            f"{storage_prefix}/llms-full.txt", llms_full_txt, "text/plain"
+        )
         db.add(
             GeneratedArtifact(
                 source_id=source.id,
                 snapshot_id=snapshot.id,
                 artifact_type="llms_full_txt",
                 artifact_version="1.0.0",
-                storage_location=str(llms_full_path),
+                storage_location=llms_full_loc,
                 checksum=hashlib.sha256(llms_full_txt.encode("utf-8")).hexdigest(),
             )
         )
 
         # C. AGENTS.md
         agents_md = AgentsMdCompiler.compile(source.name, ckr_docs)
-        agents_md_path = artifact_base_dir / "AGENTS.md"
-        agents_md_path.write_text(agents_md, encoding="utf-8")
+        agents_md_loc = await storage.put_object(
+            f"{storage_prefix}/AGENTS.md", agents_md, "text/markdown"
+        )
         db.add(
             GeneratedArtifact(
                 source_id=source.id,
                 snapshot_id=snapshot.id,
                 artifact_type="agents_md",
                 artifact_version="1.0.0",
-                storage_location=str(agents_md_path),
+                storage_location=agents_md_loc,
                 checksum=hashlib.sha256(agents_md.encode("utf-8")).hexdigest(),
             )
         )
 
         # D. SKILL.md
         skill_md = SkillMdCompiler.compile(f"Use {source.name}", ckr_docs[0])
-        skill_md_path = artifact_base_dir / "SKILL.md"
-        skill_md_path.write_text(skill_md, encoding="utf-8")
+        skill_md_loc = await storage.put_object(
+            f"{storage_prefix}/SKILL.md", skill_md, "text/markdown"
+        )
         db.add(
             GeneratedArtifact(
                 source_id=source.id,
                 snapshot_id=snapshot.id,
                 artifact_type="skill_md",
                 artifact_version="1.0.0",
-                storage_location=str(skill_md_path),
+                storage_location=skill_md_loc,
                 checksum=hashlib.sha256(skill_md.encode("utf-8")).hexdigest(),
             )
         )
@@ -196,9 +200,12 @@ class CompilerPipeline:
             ],
             "published_at": snapshot.published_at.isoformat(),
         }
-        manifest_path = artifact_base_dir / "manifest.json"
-        manifest_path.write_text(json.dumps(manifest_data, indent=2), encoding="utf-8")
-        snapshot.manifest_location = str(manifest_path)
+        manifest_loc = await storage.put_object(
+            f"{storage_prefix}/manifest.json",
+            json.dumps(manifest_data, indent=2),
+            "application/json",
+        )
+        snapshot.manifest_location = manifest_loc
 
         # 7. Atomic Publication: update active_snapshot_id on source
         source.active_snapshot_id = snapshot.id

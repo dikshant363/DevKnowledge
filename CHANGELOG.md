@@ -5,6 +5,22 @@ All notable changes to DevKnowledge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-11-14
+
+### Added
+- **Free-Cloud Zero-Cost Deployment Infrastructure (₹0/Month)**:
+  - **Durable PostgreSQL Job Queue**: Atomic claiming via `FOR UPDATE SKIP LOCKED`, lease-based execution, worker heartbeats, exponential backoff, dead-letter routing, duplicate execution protection via `idempotency_key`, and recovery of abandoned jobs.
+  - **Cloudflare Integration**:
+    - Cloudflare Pages configuration for zero-cost static Next.js export (`apps/web/out`).
+    - Cloudflare Workers lightweight API gateway (`apps/cloudflare-worker`) complying with <50ms CPU limits and request rate limits.
+    - Cloudflare Cron Triggers (`*/15 * * * *`) for automatic synchronization scheduling.
+  - **Cloudflare R2 Storage Adapter**: S3-compatible storage backend with AWS SigV4, SHA-256 cryptographic snapshot integrity verification, and local fallback.
+  - **GitHub Actions Crawler Runner**: Ephemeral Playwright crawler execution (`.github/workflows/crawler-runner.yml` and `apps/worker/runner.py`) with authenticated job claiming, background heartbeats, and completion/failure callbacks.
+  - **Zero-Cost Safeguards**: Quota tracker enforcing free-tier boundaries (Neon 500MB, R2 10GB, Workers 100k req/day, GHA 2,000 mins/mo) with automatic graceful pause at 90% threshold.
+  - **Serverless Cache Abstraction**: Serverless Upstash Redis HTTP REST adapter with seamless in-memory fallback.
+  - **Disaster Recovery**: Automated Neon PostgreSQL and SQLite backup script with SHA-256 integrity checks and R2 archiving (`infrastructure/backup/neon_r2_backup.sh`).
+  - **Comprehensive Documentation**: Complete deployment manual in `docs/DEPLOYMENT_FREE_CLOUD.md`.
+
 ## [1.0.0] - 2026-11-14
 
 ### Added

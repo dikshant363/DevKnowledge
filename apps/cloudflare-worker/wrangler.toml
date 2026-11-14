@@ -1,0 +1,17 @@
+name = "devknowledge-gateway"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# Cloudflare Cron Triggers: Synchronize documentation sources automatically on free tier
+[triggers]
+crons = ["*/15 * * * *"]
+
+[vars]
+ENVIRONMENT = "production"
+GITHUB_REPOSITORY = "owner/devknowledge"
+API_ORIGIN = "https://api.devknowledge.dev"
+
+# The following secrets are set via `wrangler secret put <KEY>`:
+# NEON_DATABASE_URL
+# GITHUB_TOKEN
+# RUNNER_API_KEY

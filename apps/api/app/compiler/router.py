@@ -13,6 +13,7 @@ from apps.api.app.database.models import (
     SourceSnapshot,
 )
 from apps.api.app.database.session import get_db
+from apps.api.app.storage.backend import get_storage_backend
 
 router = APIRouter(prefix="/sources", tags=["Knowledge Compiler"])
 
@@ -72,15 +73,18 @@ async def get_source_manifest(
         select(SourceSnapshot).where(SourceSnapshot.id == source.active_snapshot_id)
     )
     snapshot = snap_res.scalar_one_or_none()
-    if (
-        not snapshot
-        or not snapshot.manifest_location
-        or not Path(snapshot.manifest_location).exists()
-    ):
-        raise HTTPException(status_code=404, detail="Manifest file not found on disk")
+    if not snapshot or not snapshot.manifest_location:
+        raise HTTPException(status_code=404, detail="Manifest file not found")
 
-    manifest_json = Path(snapshot.manifest_location).read_text(encoding="utf-8")
-    return json.loads(manifest_json)
+    storage = get_storage_backend()
+    try:
+        manifest_bytes = await storage.get_object(snapshot.manifest_location)
+        return json.loads(manifest_bytes.decode("utf-8"))
+    except Exception as e:
+        if Path(snapshot.manifest_location).exists():
+            manifest_json = Path(snapshot.manifest_location).read_text(encoding="utf-8")
+            return json.loads(manifest_json)
+        raise HTTPException(status_code=404, detail="Manifest file not found in storage") from e
 
 
 @router.get("/{source_id}/artifacts")
@@ -149,10 +153,21 @@ async def get_artifact_content(
         )
     )
     artifact = art_res.scalar_one_or_none()
-    if not artifact or not Path(artifact.storage_location).exists():
+    if not artifact or not artifact.storage_location:
         raise HTTPException(status_code=404, detail=f"Artifact '{artifact_type}' not found")
 
-    content = Path(artifact.storage_location).read_text(encoding="utf-8")
+    storage = get_storage_backend()
+    try:
+        data = await storage.get_object(artifact.storage_location)
+        content = data.decode("utf-8")
+    except Exception as e:
+        if Path(artifact.storage_location).exists():
+            content = Path(artifact.storage_location).read_text(encoding="utf-8")
+        else:
+            raise HTTPException(
+                status_code=404, detail=f"Artifact '{artifact_type}' not found in storage"
+            ) from e
+
     media_type = "text/plain; charset=utf-8"
     if artifact_type.endswith("_txt") or artifact_type.endswith("_md"):
         media_type = "text/markdown; charset=utf-8"

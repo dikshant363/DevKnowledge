@@ -184,18 +184,36 @@ class CrawlJob(Base):
     job_type: Mapped[str] = mapped_column(String(50), default="full_crawl", nullable=False)
     status: Mapped[str] = mapped_column(
         String(50), default="pending", nullable=False
-    )  # pending, running, completed, failed, cancelled
+    )  # pending, leased, running, completed, failed, cancelled, dead_letter
     priority: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     progress: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     pages_discovered: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     pages_processed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     pages_failed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    max_attempts: Mapped[int] = mapped_column(Integer, default=3, nullable=False)
+    scheduled_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    lease_expires_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    heartbeat_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     error_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    error_details: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    idempotency_key: Mapped[Optional[str]] = mapped_column(String(128), unique=True, nullable=True)
+    worker_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
 
     source: Mapped["DocumentationSource"] = relationship(
         "DocumentationSource", back_populates="crawl_jobs"
+    )
+
+    __table_args__ = (
+        Index("ix_crawl_jobs_status_sched", "status", "scheduled_at"),
+        Index("ix_crawl_jobs_lease_exp", "lease_expires_at"),
+        Index("ix_crawl_jobs_prio_sched", "priority", "scheduled_at"),
     )
 
 
