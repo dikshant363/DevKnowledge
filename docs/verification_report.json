@@ -1,0 +1,42 @@
+{
+  "viewports_tested": 6,
+  "views_tested": 18,
+  "interactions_tested": [
+    "Live SSRF loopback check",
+    "Discovery sweep trigger",
+    "Technology catalog filtering",
+    "Search query execution ('spawn')",
+    "Manifest dependency analysis",
+    "API token rotation",
+    "Command Palette \u2318K open, search, and ESC close"
+  ],
+  "screenshots_captured": [
+    "docs/screenshots/overview_mobile_375.png",
+    "docs/screenshots/overview_mobile_large_430.png",
+    "docs/screenshots/overview_tablet_768.png",
+    "docs/screenshots/overview_laptop_1024.png",
+    "docs/screenshots/overview_desktop_1440.png",
+    "docs/screenshots/overview_desktop_1440_light.png",
+    "docs/screenshots/overview_wide_1920.png",
+    "docs/screenshots/view_overview_desktop.png",
+    "docs/screenshots/view_sources_desktop.png",
+    "docs/screenshots/view_register_source_desktop.png",
+    "docs/screenshots/view_source_details_desktop.png",
+    "docs/screenshots/view_discovery_desktop.png",
+    "docs/screenshots/view_discovery_review_desktop.png",
+    "docs/screenshots/view_technologies_desktop.png",
+    "docs/screenshots/view_jobs_desktop.png",
+    "docs/screenshots/view_job_details_desktop.png",
+    "docs/screenshots/view_sync_desktop.png",
+    "docs/screenshots/view_search_desktop.png",
+    "docs/screenshots/view_artifacts_desktop.png",
+    "docs/screenshots/view_artifact_preview_desktop.png",
+    "docs/screenshots/view_project_intel_desktop.png",
+    "docs/screenshots/view_mcp_desktop.png",
+    "docs/screenshots/view_cli_desktop.png",
+    "docs/screenshots/view_health_desktop.png",
+    "docs/screenshots/view_settings_desktop.png",
+    "docs/screenshots/command_palette_modal.png"
+  ],
+  "errors": []
+}

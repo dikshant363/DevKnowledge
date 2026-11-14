@@ -1,10 +1,15 @@
 from datetime import datetime, timedelta, timezone
 from typing import List
 
+import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from apps.api.app.database.models import CrawlJob, DocumentationSource
+from apps.api.app.database.models import DocumentationSource
+from apps.api.app.jobs.service import JobQueueService
+from apps.api.app.quota.tracker import QuotaLimitExceededError
+
+logger = structlog.get_logger()
 
 
 class SyncScheduler:
@@ -46,16 +51,25 @@ class SyncScheduler:
         now = datetime.now(timezone.utc)
 
         for src in due:
-            job = CrawlJob(
-                source_id=src.id,
-                job_type="incremental_sync",
-                status="pending",
-                priority=5,
-            )
-            db.add(job)
-            src.status = "queued"
-            src.last_checked_at = now
-            count += 1
+            try:
+                idempotency_key = f"sync:{src.id}:{now.strftime('%Y%m%d%H')}"
+                await JobQueueService.enqueue_job(
+                    db=db,
+                    source_id=src.id,
+                    job_type="incremental_sync",
+                    priority=5,
+                    idempotency_key=idempotency_key,
+                )
+                src.status = "queued"
+                src.last_checked_at = now
+                count += 1
+            except QuotaLimitExceededError as e:
+                logger.warning(
+                    "Skipping sync scheduling due to zero-cost quota safeguard",
+                    source_id=src.id,
+                    error=str(e),
+                )
+                break
 
         if count > 0:
             await db.commit()

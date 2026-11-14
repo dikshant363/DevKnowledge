@@ -113,8 +113,20 @@ export default {
       );
     }
 
-    // 3. Manual Dispatch Endpoint
+    // 3. Manual Dispatch Endpoint (Protected by RUNNER_API_KEY)
     if (url.pathname === "/api/v1/sync/dispatch" && request.method === "POST") {
+      const authHeader = request.headers.get("Authorization");
+      const runnerHeader = request.headers.get("X-Runner-Key");
+      const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+      const providedKey = runnerHeader || bearerToken;
+
+      if (env.RUNNER_API_KEY && providedKey !== env.RUNNER_API_KEY) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized: valid RUNNER_API_KEY required for sync dispatch" }),
+          { status: 401, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
       if (!env.GITHUB_TOKEN || !env.GITHUB_REPOSITORY) {
         return new Response(
           JSON.stringify({ error: "GITHUB_TOKEN or GITHUB_REPOSITORY not configured" }),

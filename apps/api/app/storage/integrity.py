@@ -40,9 +40,7 @@ async def verify_snapshot_integrity(
     """
     backend = storage or get_storage_backend()
 
-    snapshot_res = await db.execute(
-        select(SourceSnapshot).where(SourceSnapshot.id == snapshot_id)
-    )
+    snapshot_res = await db.execute(select(SourceSnapshot).where(SourceSnapshot.id == snapshot_id))
     snapshot = snapshot_res.scalar_one_or_none()
     if not snapshot:
         return {"valid": False, "error": f"Snapshot not found: {snapshot_id}"}
@@ -57,13 +55,15 @@ async def verify_snapshot_integrity(
 
     for art in artifacts:
         is_ok = await verify_artifact_checksum(backend, art.storage_location, art.checksum)
-        checked.append({
-            "artifact_id": art.id,
-            "artifact_type": art.artifact_type,
-            "storage_location": art.storage_location,
-            "expected_checksum": art.checksum,
-            "verified": is_ok,
-        })
+        checked.append(
+            {
+                "artifact_id": art.id,
+                "artifact_type": art.artifact_type,
+                "storage_location": art.storage_location,
+                "expected_checksum": art.checksum,
+                "verified": is_ok,
+            }
+        )
         if not is_ok:
             all_valid = False
 

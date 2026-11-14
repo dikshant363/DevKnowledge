@@ -54,3 +54,21 @@ impl<'a> SyncEngine<'a> {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sync_summary_up_to_date() {
+        let summary = SyncSummary {
+            source_id: Uuid::new_v4(),
+            documents_downloaded: 0,
+            documents_skipped: 15,
+            is_up_to_date: true,
+        };
+        assert!(summary.is_up_to_date);
+        assert_eq!(summary.documents_downloaded, 0);
+        assert_eq!(summary.documents_skipped, 15);
+    }
+}

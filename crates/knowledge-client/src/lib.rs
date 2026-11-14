@@ -88,3 +88,20 @@ impl KnowledgeClient {
         Ok(results)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_knowledge_client_initialization() {
+        let client = KnowledgeClient::new(
+            "http://localhost:8000".to_string(),
+            Some("test-token-123".to_string()),
+        );
+        assert!(client.is_ok());
+
+        let client_no_auth = KnowledgeClient::new("http://localhost:8000".to_string(), None);
+        assert!(client_no_auth.is_ok());
+    }
+}

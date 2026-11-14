@@ -1,11 +1,14 @@
+import hmac
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Security, status
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.app.auth.security import decode_access_token, security_bearer
 from apps.api.app.config import get_settings
-from apps.api.app.database.models import CrawlJob
+from apps.api.app.database.models import CrawlJob, User
 from apps.api.app.database.session import get_db
 from apps.api.app.jobs.schemas import (
     CancelJobRequest,
@@ -25,20 +28,52 @@ router = APIRouter(prefix="/jobs", tags=["Durable Job Queue"])
 
 async def authenticate_runner_or_user(
     x_runner_key: Optional[str] = Header(None, alias="X-Runner-Key"),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(security_bearer),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Accepts either an authorized runner API key or a valid user JWT session.
+    Fails closed with 401 Unauthorized if neither is verified.
     """
     settings = get_settings()
-    if x_runner_key and x_runner_key == settings.RUNNER_API_KEY:
-        return {"type": "runner", "id": "github-actions-runner"}
-    return {"type": "runner_direct", "id": "local"}
+
+    # 1. Verify X-Runner-Key (constant-time comparison)
+    if x_runner_key:
+        if settings.RUNNER_API_KEY and hmac.compare_digest(x_runner_key, settings.RUNNER_API_KEY):
+            return {"type": "runner", "id": "github-actions-runner"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid runner API key",
+        )
+
+    # 2. Verify User JWT Bearer Token
+    if credentials:
+        payload = decode_access_token(credentials.credentials)
+        if payload and "sub" in payload:
+            user_res = await db.execute(select(User).where(User.id == payload["sub"]))
+            user = user_res.scalar_one_or_none()
+            if user:
+                return {"type": "user", "id": user.id}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired authentication token",
+        )
+
+    # 3. Testing Environment Direct Fallback
+    if settings.ENVIRONMENT == "testing":
+        return {"type": "test_direct", "id": "test-runner"}
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication required. Provide X-Runner-Key or Bearer token.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 @router.post("/enqueue", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
 async def enqueue_job(
     req: EnqueueJobRequest,
+    auth=Depends(authenticate_runner_or_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -145,6 +180,7 @@ async def fail_job(
 async def cancel_job(
     job_id: str,
     req: CancelJobRequest,
+    auth=Depends(authenticate_runner_or_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -158,6 +194,7 @@ async def cancel_job(
 
 @router.post("/recover")
 async def recover_abandoned_jobs(
+    auth=Depends(authenticate_runner_or_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
