@@ -18,10 +18,38 @@ import {
   ExternalLink,
   ShieldCheck,
   ChevronRight,
+  PlusCircle,
+  FileSearch,
+  CheckSquare,
+  Network,
+  Clock,
   Sparkles,
+  FileCode,
+  Box,
+  Settings,
+  HeartPulse,
+  Code2,
 } from "lucide-react";
 
-export type ActiveTab = "overview" | "sources" | "discovery" | "jobs" | "artifacts" | "search";
+export type ActiveTab =
+  | "overview"
+  | "sources"
+  | "register_source"
+  | "source_details"
+  | "discovery"
+  | "discovery_review"
+  | "technologies"
+  | "jobs"
+  | "job_details"
+  | "sync"
+  | "search"
+  | "artifacts"
+  | "artifact_preview"
+  | "project_intel"
+  | "mcp"
+  | "cli"
+  | "health"
+  | "settings";
 
 interface NavigationShellProps {
   activeTab: ActiveTab;
@@ -44,13 +72,56 @@ export function NavigationShell({
 }: NavigationShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const tabs: { id: ActiveTab; label: string; icon: React.ReactNode; shortcut: string }[] = [
-    { id: "overview", label: "Overview", icon: <Activity className="h-4 w-4" />, shortcut: "1" },
-    { id: "sources", label: "Source Registry", icon: <BookOpen className="h-4 w-4" />, shortcut: "2" },
-    { id: "discovery", label: "Discovery Center", icon: <Compass className="h-4 w-4" />, shortcut: "3" },
-    { id: "jobs", label: "Job Monitor", icon: <Layers className="h-4 w-4" />, shortcut: "4" },
-    { id: "artifacts", label: "Artifacts (CKR)", icon: <Database className="h-4 w-4" />, shortcut: "5" },
-    { id: "search", label: "Search Explorer", icon: <Search className="h-4 w-4" />, shortcut: "6" },
+  // Group definitions for high-density multi-view layout
+  const navClusters = [
+    {
+      name: "Core",
+      tabs: [
+        { id: "overview" as ActiveTab, label: "Overview", icon: <Activity className="h-3.5 w-3.5" /> },
+      ],
+    },
+    {
+      name: "Sources",
+      tabs: [
+        { id: "sources" as ActiveTab, label: "All Sources", icon: <BookOpen className="h-3.5 w-3.5" /> },
+        { id: "register_source" as ActiveTab, label: "Register Source", icon: <PlusCircle className="h-3.5 w-3.5" /> },
+        { id: "source_details" as ActiveTab, label: "Source Details", icon: <FileSearch className="h-3.5 w-3.5" /> },
+      ],
+    },
+    {
+      name: "Discovery",
+      tabs: [
+        { id: "discovery" as ActiveTab, label: "Discovery Sweeps", icon: <Compass className="h-3.5 w-3.5" /> },
+        { id: "discovery_review" as ActiveTab, label: "Review Queue", icon: <CheckSquare className="h-3.5 w-3.5" /> },
+        { id: "technologies" as ActiveTab, label: "Technology Catalog", icon: <Network className="h-3.5 w-3.5" /> },
+      ],
+    },
+    {
+      name: "Ingestion & Sync",
+      tabs: [
+        { id: "jobs" as ActiveTab, label: "Crawl Jobs", icon: <Layers className="h-3.5 w-3.5" /> },
+        { id: "job_details" as ActiveTab, label: "Logs & Diagnosis", icon: <FileCode className="h-3.5 w-3.5" /> },
+        { id: "sync" as ActiveTab, label: "Sync Policies", icon: <Clock className="h-3.5 w-3.5" /> },
+      ],
+    },
+    {
+      name: "Knowledge",
+      tabs: [
+        { id: "search" as ActiveTab, label: "Search Explorer", icon: <Search className="h-3.5 w-3.5" /> },
+        { id: "artifacts" as ActiveTab, label: "Artifacts (CKR)", icon: <Database className="h-3.5 w-3.5" /> },
+        { id: "artifact_preview" as ActiveTab, label: "Artifact Preview", icon: <Code2 className="h-3.5 w-3.5" /> },
+      ],
+    },
+    {
+      name: "Agents & System",
+      tabs: [
+        { id: "project_intel" as ActiveTab, label: "Project Intel", icon: <Box className="h-3.5 w-3.5" /> },
+        { id: "mcp" as ActiveTab, label: "MCP Server", icon: <Sparkles className="h-3.5 w-3.5" /> },
+        { id: "cli" as ActiveTab, label: "CLI & Local", icon: <Terminal className="h-3.5 w-3.5" /> },
+        { id: "health" as ActiveTab, label: "System Health", icon: <HeartPulse className="h-3.5 w-3.5" /> },
+        { id: "settings" as ActiveTab, label: "Settings", icon: <Settings className="h-3.5 w-3.5" /> },
+      ],
+    },
   ];
 
   const getBreadcrumb = () => {
@@ -58,15 +129,39 @@ export function NavigationShell({
       case "overview":
         return "Workstation / System Telemetry & Health";
       case "sources":
-        return "Workstation / Source Registry (SSRF Hardened)";
+        return "Sources / Official Registry";
+      case "register_source":
+        return "Sources / Register New Documentation";
+      case "source_details":
+        return "Sources / Snapshots & Page Inspector";
       case "discovery":
-        return "Workstation / Universal Discovery Center";
+        return "Discovery / Universal Automated Sweeps";
+      case "discovery_review":
+        return "Discovery / Official Candidate Review Queue";
+      case "technologies":
+        return "Discovery / Hierarchical Technology Catalog";
       case "jobs":
-        return "Workstation / Ingestion & Compilation Pipeline Queue";
-      case "artifacts":
-        return "Workstation / Canonical Knowledge Repository (CKR)";
+        return "Ingestion / Durable Crawler Job Monitor";
+      case "job_details":
+        return "Ingestion / Live Execution Logs & Retry";
+      case "sync":
+        return "Ingestion / Cloudflare Worker Sync Policies";
       case "search":
-        return "Workstation / Developer Semantic Search Workbench";
+        return "Knowledge / Hybrid Semantic Search Workbench";
+      case "artifacts":
+        return "Knowledge / Canonical Knowledge Repository (CKR)";
+      case "artifact_preview":
+        return "Knowledge / Compiled Artifact Inspector";
+      case "project_intel":
+        return "Agents / Dependency Analysis & Pinned Knowledge";
+      case "mcp":
+        return "Agents / Model Context Protocol (10 Tools)";
+      case "cli":
+        return "Agents / Rust CLI & Local Offline Cache";
+      case "health":
+        return "System / Telemetry, Database & Quota Guards";
+      case "settings":
+        return "System / API Keys & Workstation Configuration";
     }
   };
 
@@ -81,7 +176,7 @@ export function NavigationShell({
             className="flex items-center gap-2.5 rounded-lg p-1 text-left astryx-focus"
             aria-label="DevKnowledge Home"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm shadow-blue-500/20">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs shadow-blue-500/20">
               <Cpu className="h-4 w-4" />
             </div>
             <div className="flex flex-col">
@@ -102,170 +197,130 @@ export function NavigationShell({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
             </span>
-            <span>Cloudflare + Supabase (₹0/mo tier active)</span>
+            <span className="font-mono">Supabase PostgreSQL 17 Connected</span>
           </div>
         </div>
 
-        {/* Center: Command Palette Trigger */}
-        <div className="flex-1 max-w-md mx-2 sm:mx-4">
+        {/* Global Controls & Actions */}
+        <div className="flex items-center gap-2">
+          {/* Global Search / Command Palette Trigger */}
           <button
-            type="button"
             onClick={onOpenCommandPalette}
-            className="group flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-500 transition hover:border-slate-300 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-850 astryx-focus"
-            aria-label="Open Command Palette (Press Command K)"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 hover:border-slate-300 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 transition astryx-focus"
+            aria-label="Search or trigger command palette (Cmd+K)"
           >
-            <div className="flex items-center gap-2">
-              <Search className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
-              <span className="truncate">Search sources, symbols, or jump to view...</span>
-            </div>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[10px] text-slate-500 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+            <Search className="h-3.5 w-3.5 text-slate-400" />
+            <span className="hidden md:inline">Command Palette</span>
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-slate-200 bg-white px-1.5 py-0.2 text-[10px] font-mono text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
               ⌘K
             </kbd>
           </button>
-        </div>
 
-        {/* Right Action Cluster */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Manual Crawler Dispatch Action */}
           {onManualDispatch && (
             <button
               onClick={onManualDispatch}
               disabled={isDispatching}
-              className="hidden md:inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition astryx-focus"
-              title="Trigger GitHub Actions Crawler Workflow"
+              className="hidden lg:inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/60 transition disabled:opacity-50 astryx-focus"
+              title="Dispatch crawler synchronization job"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${isDispatching ? "animate-spin text-blue-500" : ""}`} />
-              <span>{isDispatching ? "Dispatching..." : "Sync Runner"}</span>
+              <RefreshCw className={`h-3.5 w-3.5 ${isDispatching ? "animate-spin text-blue-600" : ""}`} />
+              <span>{isDispatching ? "Dispatching..." : "Sync Due"}</span>
             </button>
           )}
 
-          {/* Theme Toggle */}
+          {/* Theme Toggle Button */}
           <button
-            type="button"
             onClick={onToggleTheme}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition astryx-focus"
-            aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-            title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 transition astryx-focus"
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
           >
-            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {isDark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-600" />}
           </button>
 
           {/* Mobile Menu Toggle */}
           <button
-            type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 astryx-focus"
-            aria-label="Toggle Mobile Navigation Menu"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 astryx-focus"
             aria-expanded={mobileMenuOpen}
+            aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
-      {/* Primary Tab Navigation (Desktop / Tablet) */}
-      <div className="hidden md:block border-t border-slate-200/80 bg-slate-50/50 px-3 sm:px-4 lg:px-8 dark:border-slate-850 dark:bg-[#070a12]/80">
-        <div className="mx-auto flex max-w-[1800px] items-center justify-between">
-          <nav
-            role="tablist"
-            aria-label="Workstation View Tabs"
-            className="flex items-center gap-1 py-1.5"
-          >
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  role="tab"
-                  id={`tab-${tab.id}`}
-                  aria-selected={isActive}
-                  aria-controls={`panel-${tab.id}`}
-                  onClick={() => onTabChange(tab.id)}
-                  className={`group flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-                    isActive
-                      ? "bg-white text-blue-600 shadow-xs border border-slate-200/80 dark:border-slate-700/60 dark:bg-slate-800 dark:text-blue-400"
-                      : "text-slate-600 hover:bg-slate-200/50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200"
-                  } astryx-focus`}
-                >
-                  <span className={isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300"}>
-                    {tab.icon}
-                  </span>
-                  <span>{tab.label}</span>
-                  <span
-                    className={`ml-1 rounded px-1 text-[9px] font-mono ${
-                      isActive
-                        ? "bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-300"
-                        : "bg-slate-200/60 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                    }`}
-                  >
-                    {tab.shortcut}
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
+      {/* Cluster Navigation Bar (Astryx Technical Sub-bar) */}
+      <div className="border-t border-slate-100 bg-slate-50/70 dark:border-slate-800/80 dark:bg-[#070a12]/80 px-3 sm:px-4 lg:px-8 py-1.5 overflow-x-auto">
+        <div className="mx-auto flex max-w-[1800px] items-center justify-between gap-4">
+          {/* Scrollable View Tabs */}
+          <div className="flex items-center gap-1">
+            {navClusters.map((cluster) => (
+              <div key={cluster.name} className="flex items-center gap-1 border-r border-slate-200/80 dark:border-slate-800 pr-2 mr-2 last:border-r-0 last:pr-0 last:mr-0">
+                <span className="hidden xl:inline text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mr-1 select-none">
+                  {cluster.name}:
+                </span>
+                {cluster.tabs.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => onTabChange(tab.id)}
+                      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-medium transition astryx-focus ${
+                        isActive
+                          ? "bg-white text-blue-600 shadow-2xs font-semibold dark:bg-slate-800 dark:text-blue-400 border border-slate-200/80 dark:border-slate-700"
+                          : "text-slate-600 hover:bg-white/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200"
+                      }`}
+                    >
+                      {tab.icon}
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
 
-          {/* Breadcrumb & Telemetry Info */}
-          <div className="hidden lg:flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
-            <span className="font-mono text-slate-400 dark:text-slate-500">{getBreadcrumb()}</span>
-            <span className="h-3 w-px bg-slate-300 dark:bg-slate-700" />
-            <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400 font-mono">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-              SSRF Hardened
-            </span>
+          {/* Breadcrumb Display */}
+          <div className="hidden 2xl:flex items-center gap-1.5 text-[11px] font-mono text-slate-400 dark:text-slate-500 shrink-0">
+            <span>{getBreadcrumb()}</span>
           </div>
         </div>
       </div>
 
-      {/* Mobile Drawer (375px & 430px viewports) */}
+      {/* Mobile Drawer (Accessible overlay) */}
       {mobileMenuOpen && (
-        <div
-          role="region"
-          aria-label="Mobile Navigation"
-          className="md:hidden border-t border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-[#070a12] space-y-1"
-        >
-          <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            Workstation Views
-          </div>
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  onTabChange(tab.id);
-                  setMobileMenuOpen(false);
-                }}
-                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold ${
-                  isActive
-                    ? "bg-blue-50 text-blue-600 dark:bg-slate-850 dark:text-blue-400"
-                    : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                } astryx-focus`}
-              >
-                <div className="flex items-center gap-2">
-                  {tab.icon}
-                  <span>{tab.label}</span>
+        <div className="border-b border-slate-200 bg-white p-4 shadow-xl dark:border-slate-800 dark:bg-slate-900 lg:hidden max-h-[80vh] overflow-y-auto">
+          <div className="space-y-4">
+            {navClusters.map((cluster) => (
+              <div key={cluster.name} className="space-y-1">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2">
+                  {cluster.name}
                 </div>
-                <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-slate-800">
-                  {tab.shortcut}
-                </span>
-              </button>
-            );
-          })}
-
-          <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-800">
-            {onManualDispatch && (
-              <button
-                onClick={() => {
-                  onManualDispatch();
-                  setMobileMenuOpen(false);
-                }}
-                disabled={isDispatching}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 py-2 text-xs font-semibold dark:border-slate-700 astryx-focus"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${isDispatching ? "animate-spin text-blue-500" : ""}`} />
-                {isDispatching ? "Dispatching..." : "Sync Runner (GitHub Actions)"}
-              </button>
-            )}
+                <div className="grid grid-cols-2 gap-1">
+                  {cluster.tabs.map((tab) => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          onTabChange(tab.id);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+                          isActive
+                            ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-semibold"
+                            : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        {tab.icon}
+                        <span className="truncate">{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

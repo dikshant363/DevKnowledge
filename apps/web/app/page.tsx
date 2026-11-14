@@ -5,14 +5,29 @@ import { NavigationShell, ActiveTab } from "@/components/NavigationShell";
 import { CommandPalette } from "@/components/CommandPalette";
 import { DashboardOverview } from "@/components/DashboardOverview";
 import { SourceRegistry } from "@/components/SourceRegistry";
+import { SourceRegistration } from "@/components/SourceRegistration";
+import { SourceDetails } from "@/components/SourceDetails";
 import { DiscoveryCenter } from "@/components/DiscoveryCenter";
+import { DiscoveryReviewQueue } from "@/components/DiscoveryReviewQueue";
+import { TechnologyCatalog } from "@/components/TechnologyCatalog";
 import { JobMonitor } from "@/components/JobMonitor";
-import { ArtifactViewer } from "@/components/ArtifactViewer";
+import { JobDetails } from "@/components/JobDetails";
+import { SynchronizationView } from "@/components/SynchronizationView";
 import { SearchExplorer } from "@/components/SearchExplorer";
-import { ShieldCheck, Cpu, Terminal, ArrowUpRight } from "lucide-react";
+import { ArtifactViewer } from "@/components/ArtifactViewer";
+import { ArtifactPreview } from "@/components/ArtifactPreview";
+import { ProjectIntelligence } from "@/components/ProjectIntelligence";
+import { McpIntegration } from "@/components/McpIntegration";
+import { CliRuntime } from "@/components/CliRuntime";
+import { SystemHealth } from "@/components/SystemHealth";
+import { SettingsView } from "@/components/SettingsView";
+import { ShieldCheck, Cpu, Terminal } from "lucide-react";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
+  const [selectedSourceId, setSelectedSourceId] = useState<string | undefined>(undefined);
+  const [selectedJobId, setSelectedJobId] = useState<string | undefined>(undefined);
+  const [selectedArtifactId, setSelectedArtifactId] = useState<string | undefined>(undefined);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
   const [isDispatching, setIsDispatching] = useState(false);
@@ -57,27 +72,20 @@ export default function HomePage() {
         return;
       }
 
-      // Number keys 1-6 for fast view switching
-      if (e.key === "1") {
-        setActiveTab("overview");
-      } else if (e.key === "2") {
-        setActiveTab("sources");
-      } else if (e.key === "3") {
-        setActiveTab("discovery");
-      } else if (e.key === "4") {
-        setActiveTab("jobs");
-      } else if (e.key === "5") {
-        setActiveTab("artifacts");
-      } else if (e.key === "6") {
-        setActiveTab("search");
-      }
+      // Fast view switching keys 1-6
+      if (e.key === "1") setActiveTab("overview");
+      else if (e.key === "2") setActiveTab("sources");
+      else if (e.key === "3") setActiveTab("discovery");
+      else if (e.key === "4") setActiveTab("jobs");
+      else if (e.key === "5") setActiveTab("artifacts");
+      else if (e.key === "6") setActiveTab("search");
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isCommandPaletteOpen]);
 
-  // Cloudflare Worker dispatch simulation or trigger
+  // Cloudflare Worker dispatch trigger
   const handleManualDispatch = () => {
     setIsDispatching(true);
     setToastMessage("Dispatched crawler execution to GitHub Actions runner.");
@@ -90,7 +98,7 @@ export default function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-[#070a12] dark:text-slate-100 transition-colors">
-      {/* Global Navigation Shell */}
+      {/* Global Navigation Shell with all 18 views */}
       <NavigationShell
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab)}
@@ -119,8 +127,9 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Tab Panels */}
+        {/* 18 Tab Panels */}
         <div id={`panel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`}>
+          {/* 1. Overview */}
           {activeTab === "overview" && (
             <DashboardOverview
               onNavigate={(tab) => setActiveTab(tab)}
@@ -132,22 +141,153 @@ export default function HomePage() {
             />
           )}
 
+          {/* 2. Sources Registry */}
           {activeTab === "sources" && (
             <SourceRegistry
               onTriggerSync={(name) => {
                 setToastMessage(`Sync enqueued for ${name}`);
                 setTimeout(() => setToastMessage(null), 3000);
               }}
+              onNavigate={(tab, id) => {
+                if (id) setSelectedSourceId(id);
+                setActiveTab(tab);
+              }}
             />
           )}
 
-          {activeTab === "discovery" && <DiscoveryCenter />}
+          {/* 3. Register Source */}
+          {activeTab === "register_source" && (
+            <SourceRegistration
+              onNavigate={(tab, id) => {
+                if (id) setSelectedSourceId(id);
+                setActiveTab(tab);
+              }}
+              onRegistered={(name) => {
+                setToastMessage(`Source '${name}' successfully registered!`);
+                setTimeout(() => setToastMessage(null), 3000);
+              }}
+            />
+          )}
 
-          {activeTab === "jobs" && <JobMonitor />}
+          {/* 4. Source Details */}
+          {activeTab === "source_details" && (
+            <SourceDetails
+              sourceId={selectedSourceId}
+              onNavigate={(tab, id) => {
+                if (id) setSelectedSourceId(id);
+                setActiveTab(tab);
+              }}
+              onTriggerSync={(name) => {
+                setToastMessage(`Incremental sync queued for ${name}`);
+                setTimeout(() => setToastMessage(null), 3000);
+              }}
+            />
+          )}
 
-          {activeTab === "artifacts" && <ArtifactViewer />}
+          {/* 5. Automatic Discovery */}
+          {activeTab === "discovery" && (
+            <DiscoveryCenter
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
 
+          {/* 6. Discovery Review Queue */}
+          {activeTab === "discovery_review" && (
+            <DiscoveryReviewQueue
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
+
+          {/* 7. Technology Catalog */}
+          {activeTab === "technologies" && (
+            <TechnologyCatalog
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
+
+          {/* 8. Crawler Jobs */}
+          {activeTab === "jobs" && (
+            <JobMonitor
+              onNavigate={(tab, id) => {
+                if (id) setSelectedJobId(id);
+                setActiveTab(tab);
+              }}
+            />
+          )}
+
+          {/* 9. Job Details & Logs */}
+          {activeTab === "job_details" && (
+            <JobDetails
+              jobId={selectedJobId}
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
+
+          {/* 10. Synchronization Policies */}
+          {activeTab === "sync" && (
+            <SynchronizationView
+              onManualDispatch={handleManualDispatch}
+              isDispatching={isDispatching}
+            />
+          )}
+
+          {/* 11. Search Explorer */}
           {activeTab === "search" && <SearchExplorer />}
+
+          {/* 12. Artifacts (CKR) */}
+          {activeTab === "artifacts" && (
+            <ArtifactViewer
+              onNavigate={(tab, id) => {
+                if (id) setSelectedArtifactId(id);
+                setActiveTab(tab);
+              }}
+            />
+          )}
+
+          {/* 13. Artifact Preview */}
+          {activeTab === "artifact_preview" && (
+            <ArtifactPreview
+              artifactId={selectedArtifactId}
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
+
+          {/* 14. Project Intelligence */}
+          {activeTab === "project_intel" && (
+            <ProjectIntelligence
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
+
+          {/* 15. MCP Server */}
+          {activeTab === "mcp" && (
+            <McpIntegration
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
+
+          {/* 16. CLI & Local Runtime */}
+          {activeTab === "cli" && (
+            <CliRuntime
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
+
+          {/* 17. System Health */}
+          {activeTab === "health" && (
+            <SystemHealth
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
+
+          {/* 18. Settings */}
+          {activeTab === "settings" && (
+            <SettingsView
+              isDark={isDark}
+              onToggleTheme={handleToggleTheme}
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
         </div>
       </main>
 

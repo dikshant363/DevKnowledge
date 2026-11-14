@@ -91,8 +91,8 @@ async def get_current_user_and_org(
         member, org = membership_row
         return user, org, member.role
 
-    # Development fallback tenant if enabled in development mode
-    if settings.ENVIRONMENT == "development":
+    # Development fallback tenant if enabled in development/local mode
+    if settings.ENVIRONMENT in ("development", "local"):
         # Look up or create default development user and organization
         result = await db.execute(select(User).where(User.email == "dev@devknowledge.dev"))
         dev_user = result.scalar_one_or_none()

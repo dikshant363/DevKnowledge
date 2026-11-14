@@ -15,12 +15,23 @@ import {
   ExternalLink,
   Sliders,
   CheckCircle2,
+  PlusCircle,
+  FileSearch,
+  CheckSquare,
+  Network,
+  Clock,
+  Sparkles,
+  FileCode,
+  Box,
+  Settings,
+  HeartPulse,
+  Code2,
 } from "lucide-react";
 import { ActiveTab } from "./NavigationShell";
 
 export interface CommandItem {
   id: string;
-  category: "Navigation" | "Sources" | "System Operations";
+  category: "Navigation" | "Sources" | "Discovery & Ingestion" | "System Operations";
   title: string;
   description: string;
   icon: React.ReactNode;
@@ -49,13 +60,13 @@ export function CommandPalette({
   const listRef = useRef<HTMLDivElement>(null);
 
   const commandItems: CommandItem[] = [
+    // 1-18 Navigation Views
     {
       id: "nav-overview",
       category: "Navigation",
-      title: "Jump to Overview Dashboard",
-      description: "System telemetry, worker health, document metrics & activity stream",
+      title: "1. Overview Dashboard",
+      description: "System telemetry, worker health, document metrics & ingestion rate",
       icon: <Activity className="h-4 w-4 text-blue-500" />,
-      shortcut: "1",
       action: () => {
         onNavigate("overview");
         onClose();
@@ -64,206 +75,304 @@ export function CommandPalette({
     {
       id: "nav-sources",
       category: "Navigation",
-      title: "Open Source Registry",
-      description: "Manage tracked documentation websites, version pins & SSRF checks",
+      title: "2. Documentation Sources",
+      description: "Manage official sources, version pinning & sync status",
       icon: <BookOpen className="h-4 w-4 text-emerald-500" />,
-      shortcut: "2",
       action: () => {
         onNavigate("sources");
+        onClose();
+      },
+    },
+    {
+      id: "nav-register-source",
+      category: "Navigation",
+      title: "3. Register Source",
+      description: "Submit new documentation URL with real-time SSRF validation",
+      icon: <PlusCircle className="h-4 w-4 text-emerald-500" />,
+      action: () => {
+        onNavigate("register_source");
+        onClose();
+      },
+    },
+    {
+      id: "nav-source-details",
+      category: "Navigation",
+      title: "4. Source Details Inspector",
+      description: "Inspect snapshots, indexed pages, content hashes and sync policy",
+      icon: <FileSearch className="h-4 w-4 text-teal-500" />,
+      action: () => {
+        onNavigate("source_details");
         onClose();
       },
     },
     {
       id: "nav-discovery",
       category: "Navigation",
-      title: "Open Discovery Center",
-      description: "Autonomous source discovery, provider quotas & candidate review queue",
+      title: "5. Automatic Discovery Center",
+      description: "Autonomous technology & documentation discovery across internet feeds",
       icon: <Compass className="h-4 w-4 text-indigo-500" />,
-      shortcut: "3",
       action: () => {
         onNavigate("discovery");
+        onClose();
+      },
+    },
+    {
+      id: "nav-discovery-review",
+      category: "Navigation",
+      title: "6. Discovery Review Queue",
+      description: "Approve or reject discovered candidates with verification scoring",
+      icon: <CheckSquare className="h-4 w-4 text-indigo-400" />,
+      action: () => {
+        onNavigate("discovery_review");
+        onClose();
+      },
+    },
+    {
+      id: "nav-technologies",
+      category: "Navigation",
+      title: "7. Technology Catalog",
+      description: "Hierarchical ecosystem taxonomy: languages, frameworks & libraries",
+      icon: <Network className="h-4 w-4 text-violet-500" />,
+      action: () => {
+        onNavigate("technologies");
         onClose();
       },
     },
     {
       id: "nav-jobs",
       category: "Navigation",
-      title: "Open Job Monitor",
-      description: "Inspect crawler queues, 6-stage pipeline progress & live worker logs",
+      title: "8. Crawler Jobs Monitor",
+      description: "Inspect durable job queue, lease timeouts & worker assignments",
       icon: <Layers className="h-4 w-4 text-purple-500" />,
-      shortcut: "4",
       action: () => {
         onNavigate("jobs");
         onClose();
       },
     },
     {
-      id: "nav-artifacts",
+      id: "nav-job-details",
       category: "Navigation",
-      title: "Inspect CKR Artifacts",
-      description: "Canonical Knowledge Repository bundles, JSON schema & markdown preview",
-      icon: <Database className="h-4 w-4 text-amber-500" />,
-      shortcut: "5",
+      title: "9. Job Details & Logs",
+      description: "Live terminal log viewer, retry actions and failure diagnosis",
+      icon: <FileCode className="h-4 w-4 text-purple-400" />,
       action: () => {
-        onNavigate("artifacts");
+        onNavigate("job_details");
+        onClose();
+      },
+    },
+    {
+      id: "nav-sync",
+      category: "Navigation",
+      title: "10. Synchronization Policies",
+      description: "Cloudflare Cron triggers, ETag checks and manual worker dispatch",
+      icon: <Clock className="h-4 w-4 text-amber-500" />,
+      action: () => {
+        onNavigate("sync");
         onClose();
       },
     },
     {
       id: "nav-search",
       category: "Navigation",
-      title: "Open Search Explorer",
-      description: "Execute full-text, semantic and symbol queries with citation links",
+      title: "11. Semantic Search Explorer",
+      description: "Query indexed documentation with code snippet highlighting and similarity scores",
       icon: <Search className="h-4 w-4 text-sky-500" />,
-      shortcut: "6",
       action: () => {
         onNavigate("search");
         onClose();
       },
     },
     {
-      id: "sync-tokio",
-      category: "Sources",
-      title: "Sync Tokio (docs.rs/tokio)",
-      description: "Trigger immediate crawl & CKR compilation for Tokio v1.38.0",
-      icon: <RefreshCw className="h-4 w-4 text-emerald-500" />,
-      action: () => {
-        onTriggerSync?.("Tokio");
-        onNavigate("jobs");
-        onClose();
-      },
-    },
-    {
-      id: "sync-axum",
-      category: "Sources",
-      title: "Sync Axum (docs.rs/axum)",
-      description: "Re-validate sitemaps and update Axum web framework documentation",
-      icon: <RefreshCw className="h-4 w-4 text-emerald-500" />,
-      action: () => {
-        onTriggerSync?.("Axum");
-        onNavigate("jobs");
-        onClose();
-      },
-    },
-    {
-      id: "sync-fastapi",
-      category: "Sources",
-      title: "Sync FastAPI (fastapi.tiangolo.com)",
-      description: "Check upstream ETags and compile latest OpenAPI/FastAPI references",
-      icon: <RefreshCw className="h-4 w-4 text-indigo-500" />,
-      action: () => {
-        onTriggerSync?.("FastAPI");
-        onNavigate("jobs");
-        onClose();
-      },
-    },
-    {
-      id: "op-sweep",
-      category: "System Operations",
-      title: "Run Universal Discovery Sweep",
-      description: "Scan Package Registries, Foundation Directories, and GitHub APIs",
-      icon: <Compass className="h-4 w-4 text-indigo-500" />,
-      action: () => {
-        onTriggerSweep?.();
-        onNavigate("discovery");
-        onClose();
-      },
-    },
-    {
-      id: "op-sqlite",
-      category: "System Operations",
-      title: "Inspect SQLite Offline Cache",
-      description: "Verify local database cache at devknowledge.db (320 KB active)",
-      icon: <Terminal className="h-4 w-4 text-amber-500" />,
+      id: "nav-artifacts",
+      category: "Navigation",
+      title: "12. Artifact Explorer (CKR)",
+      description: "Browse compiled llms.txt, llms-full.txt, SKILL.md and AGENTS.md outputs",
+      icon: <Database className="h-4 w-4 text-amber-600" />,
       action: () => {
         onNavigate("artifacts");
         onClose();
       },
     },
     {
-      id: "op-ssrf",
-      category: "System Operations",
-      title: "Test SSRF Pre-flight Hardening",
-      description: "Run DNS resolution checks against private subnets (127.0.0.1, 10.0.0.0/8, 169.254.169.254)",
-      icon: <ShieldAlert className="h-4 w-4 text-rose-500" />,
+      id: "nav-artifact-preview",
+      category: "Navigation",
+      title: "13. Artifact Previewer",
+      description: "Full markdown/code viewer with copy and download controls",
+      icon: <Code2 className="h-4 w-4 text-amber-500" />,
       action: () => {
-        onNavigate("sources");
+        onNavigate("artifact_preview");
+        onClose();
+      },
+    },
+    {
+      id: "nav-project-intel",
+      category: "Navigation",
+      title: "14. Project Intelligence",
+      description: "Analyze package manifests (package.json, Cargo.toml) to pin docs",
+      icon: <Box className="h-4 w-4 text-cyan-500" />,
+      action: () => {
+        onNavigate("project_intel");
+        onClose();
+      },
+    },
+    {
+      id: "nav-mcp",
+      category: "Navigation",
+      title: "15. MCP Server Workbench",
+      description: "Model Context Protocol tools, schema viewer & Cursor/Claude integration",
+      icon: <Sparkles className="h-4 w-4 text-yellow-500" />,
+      action: () => {
+        onNavigate("mcp");
+        onClose();
+      },
+    },
+    {
+      id: "nav-cli",
+      category: "Navigation",
+      title: "16. CLI & Local Runtime",
+      description: "Rust devknowledge CLI commands, offline SQLite cache & local sync",
+      icon: <Terminal className="h-4 w-4 text-slate-400" />,
+      action: () => {
+        onNavigate("cli");
+        onClose();
+      },
+    },
+    {
+      id: "nav-health",
+      category: "Navigation",
+      title: "17. System Health & Telemetry",
+      description: "Postgres pool metrics, Cloudflare Workers status & storage quotas",
+      icon: <HeartPulse className="h-4 w-4 text-rose-500" />,
+      action: () => {
+        onNavigate("health");
+        onClose();
+      },
+    },
+    {
+      id: "nav-settings",
+      category: "Navigation",
+      title: "18. Workstation Settings",
+      description: "API keys, storage toggles, runner authentication and theme settings",
+      icon: <Settings className="h-4 w-4 text-slate-400" />,
+      action: () => {
+        onNavigate("settings");
+        onClose();
+      },
+    },
+
+    // Actions
+    {
+      id: "action-sweep",
+      category: "Discovery & Ingestion",
+      title: "Trigger Full Discovery Sweep",
+      description: "Scan Crates.io, PyPI, and npm registries for new candidate documentation",
+      icon: <Compass className="h-4 w-4 text-indigo-500" />,
+      action: () => {
+        onTriggerSweep?.();
+        onClose();
+      },
+    },
+    {
+      id: "action-sync-tokio",
+      category: "Sources",
+      title: "Sync Tokio Documentation",
+      description: "Enqueue immediate incremental crawl for Tokio 1.38.0",
+      icon: <RefreshCw className="h-4 w-4 text-blue-500" />,
+      action: () => {
+        onTriggerSync?.("Tokio");
+        onClose();
+      },
+    },
+    {
+      id: "action-sync-fastapi",
+      category: "Sources",
+      title: "Sync FastAPI Documentation",
+      description: "Enqueue immediate incremental crawl for FastAPI 0.111.0",
+      icon: <RefreshCw className="h-4 w-4 text-blue-500" />,
+      action: () => {
+        onTriggerSync?.("FastAPI");
         onClose();
       },
     },
   ];
 
-  const filteredItems = commandItems.filter(
-    (item) =>
-      item.title.toLowerCase().includes(query.toLowerCase()) ||
-      item.description.toLowerCase().includes(query.toLowerCase()) ||
-      item.category.toLowerCase().includes(query.toLowerCase())
-  );
-
-  useEffect(() => {
-    if (isOpen) {
-      setQuery("");
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [isOpen]);
+  const filteredItems = commandItems.filter((item) => {
+    const q = query.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      item.title.toLowerCase().includes(q) ||
+      item.description.toLowerCase().includes(q) ||
+      item.category.toLowerCase().includes(q)
+    );
+  });
 
   useEffect(() => {
     setSelectedIndex(0);
   }, [query]);
 
-  // Keyboard navigation inside palette
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      onClose();
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev + 1 < filteredItems.length ? prev + 1 : 0));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : filteredItems.length - 1));
-    } else if (e.key === "Enter" && filteredItems[selectedIndex]) {
-      e.preventDefault();
-      filteredItems[selectedIndex].action();
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    } else {
+      setQuery("");
     }
-  };
+  }, [isOpen]);
+
+  // Handle arrow keys and Enter
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev < filteredItems.length - 1 ? prev + 1 : 0));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : filteredItems.length - 1));
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (filteredItems[selectedIndex]) {
+          filteredItems[selectedIndex].action();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, filteredItems, selectedIndex, onClose]);
 
   if (!isOpen) return null;
 
   return (
     <div
+      className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 lg:p-20 bg-slate-950/60 backdrop-blur-xs transition-opacity"
+      onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Workstation Command Palette"
-      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-sm transition-opacity"
-      onClick={onClose}
+      aria-label="DevKnowledge Command Palette"
     >
       <div
-        className="w-full max-w-2xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-[#0f172a] transition-all"
+        className="w-full max-w-2xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-[#0c101d] transition-colors"
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
       >
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          <Search className="h-5 w-5 text-slate-400" />
+        <div className="relative flex items-center border-b border-slate-200 px-4 dark:border-slate-800">
+          <Search className="h-4 w-4 text-slate-400 shrink-0 mr-3" />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Type a command, source, or view name..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none dark:text-slate-100"
+            placeholder="Search all 18 views, sources, actions, or tools... (e.g. 'mcp', 'jobs', 'sync')"
+            className="h-13 w-full bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-hidden dark:text-slate-100"
+            role="combobox"
+            aria-expanded={filteredItems.length > 0}
+            aria-controls="command-list"
           />
-          {query && (
-            <button
-              onClick={() => setQuery("")}
-              className="rounded p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs"
-            >
-              Clear
-            </button>
-          )}
-          <kbd className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+          <kbd className="hidden sm:inline-flex rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-mono font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
             ESC
           </kbd>
         </div>
@@ -271,63 +380,56 @@ export function CommandPalette({
         {/* Results List */}
         <div
           ref={listRef}
-          className="max-h-[380px] overflow-y-auto p-2 space-y-1"
+          id="command-list"
           role="listbox"
+          className="max-h-96 overflow-y-auto p-2 space-y-1"
         >
           {filteredItems.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-500">
-              No matching commands found for &ldquo;{query}&rdquo;
+            <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">
+              No matching commands or navigation routes for &ldquo;{query}&rdquo;
             </div>
           ) : (
-            filteredItems.map((item, index) => {
-              const isSelected = index === selectedIndex;
+            filteredItems.map((item, idx) => {
+              const isSelected = idx === selectedIndex;
               return (
                 <div
                   key={item.id}
+                  id={`item-${item.id}`}
                   role="option"
                   aria-selected={isSelected}
-                  onClick={() => item.action()}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                  className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-xs transition ${
+                  onClick={item.action}
+                  onMouseEnter={() => setSelectedIndex(idx)}
+                  className={`flex cursor-pointer items-center justify-between rounded-lg p-2.5 text-xs transition ${
                     isSelected
-                      ? "bg-blue-50 text-blue-900 dark:bg-slate-800 dark:text-blue-100"
-                      : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-850"
+                      ? "bg-blue-50 text-blue-900 dark:bg-blue-950/60 dark:text-blue-200"
+                      : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
                         isSelected
-                          ? "border-blue-200 bg-white dark:border-blue-900 dark:bg-slate-900"
-                          : "border-slate-200 bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900"
+                          ? "border-blue-200 bg-white dark:border-blue-800 dark:bg-blue-900/50"
+                          : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
                       }`}
                     >
                       {item.icon}
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold truncate">{item.title}</span>
-                        <span className="rounded bg-slate-100 px-1.5 py-0.2 text-[9px] font-mono text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                          {item.category}
-                        </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold truncate text-slate-900 dark:text-slate-100">
+                        {item.title}
                       </div>
-                      <p className="mt-0.5 text-[11px] text-slate-500 truncate dark:text-slate-400">
+                      <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
                         {item.description}
-                      </p>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    {item.shortcut && (
-                      <kbd className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[9px] text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                        {item.shortcut}
-                      </kbd>
-                    )}
-                    <ArrowRight
-                      className={`h-3.5 w-3.5 ${
-                        isSelected ? "text-blue-600 dark:text-blue-400" : "text-transparent"
-                      }`}
-                    />
+                  <div className="flex items-center gap-2 shrink-0 ml-3">
+                    <span className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[9px] font-mono text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+                      {item.category}
+                    </span>
+                    {isSelected && <ArrowRight className="h-3.5 w-3.5 text-blue-500" />}
                   </div>
                 </div>
               );
@@ -335,26 +437,14 @@ export function CommandPalette({
           )}
         </div>
 
-        {/* Keyboard Footer */}
-        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/80 px-4 py-2 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1">
-              <kbd className="rounded border border-slate-200 bg-white px-1 py-0.2 font-mono text-[9px] dark:border-slate-700 dark:bg-slate-800">
-                ↑
-              </kbd>
-              <kbd className="rounded border border-slate-200 bg-white px-1 py-0.2 font-mono text-[9px] dark:border-slate-700 dark:bg-slate-800">
-                ↓
-              </kbd>
-              <span>to navigate</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="rounded border border-slate-200 bg-white px-1 py-0.2 font-mono text-[9px] dark:border-slate-700 dark:bg-slate-800">
-                ↵
-              </kbd>
-              <span>to select</span>
-            </span>
+        {/* Footer shortcuts */}
+        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2 text-[11px] font-mono text-slate-500 dark:border-slate-800 dark:bg-[#090d18] dark:text-slate-400">
+          <div className="flex items-center gap-3">
+            <span>↑↓ Navigate</span>
+            <span>↵ Select</span>
+            <span>ESC Close</span>
           </div>
-          <span>Meta Astryx Command Hub</span>
+          <span className="text-[10px]">18 Workstation Modules Registered</span>
         </div>
       </div>
     </div>
